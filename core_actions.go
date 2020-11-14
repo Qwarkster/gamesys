@@ -1,4 +1,4 @@
-package rpg
+package gamesys
 
 import (
 	"github.com/faiface/pixel"

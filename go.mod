@@ -1,4 +1,4 @@
-module github.com/Qwarkster/game-sys
+module github.com/Qwarkster/gamesys
 
 go 1.13
 

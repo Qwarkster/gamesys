@@ -1,4 +1,4 @@
-package rpg
+package gamesys
 
 // Action will hold the instructions on an action to perform
 type Action struct {
