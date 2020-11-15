@@ -21,4 +21,5 @@ func TestLoadConfiguration(t *testing.T) {
 
 	// Are our speeds failing?
 	assert.Equal(t, 200.0, newconfig.Default.Scene.Basespeed, "Basespeed should not be 0")
+	assert.Equal(t, 1.0, newconfig.Default.Actor.Speed, "Actor speed modifier should not be 0")
 }

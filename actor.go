@@ -30,7 +30,7 @@ type Actor struct {
 	Clip pixel.Rect
 
 	// Speed will set a speed modifier for the actor.
-	Speed float64 `xml:"speed"`
+	Speed float64 `xml:"speed,attr"`
 
 	// Visible determines if we see the sprite or not.
 	Visible bool
