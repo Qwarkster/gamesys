@@ -6,6 +6,15 @@ import (
 	"strings"
 )
 
+// Action will hold the instructions on an action to perform
+type Action struct {
+	// The action keyword
+	Action string
+
+	// The arguments for this command
+	Args []interface{}
+}
+
 // Script will hold a sequence or collection of commands. In theory this is
 // is what a script file might get loaded into.
 type Script struct {

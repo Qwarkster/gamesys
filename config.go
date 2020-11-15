@@ -85,7 +85,7 @@ func (c *Configuration) Value(s string) int {
 
 // BigValue will return an option as an int64.
 func (c *Configuration) BigValue(s string) int64 {
-	return int64(c.Get(s).(int))
+	return int64(c.Get(s).(int64))
 }
 
 // String will return an option as a string.
@@ -95,10 +95,33 @@ func (c *Configuration) String(s string) string {
 
 // Float will return an option as a float64.
 func (c *Configuration) Float(s string) float64 {
-	return StrFloat(c.Get(s))
+	// We want to read numbers as floats if required, so catch
+	// at least ints and floats, convert strings.
+	switch val := c.Get(s).(type) {
+	case string:
+		return StrFloat(val)
+	case int:
+		return float64(val)
+	case int64:
+		return float64(val)
+	case float64:
+		return val
+	}
+
+	// At the end, just give a zero for now
+	return float64(0)
 }
 
 // Bool will return an option as a bool.
 func (c *Configuration) Bool(s string) bool {
-	return StrBool(c.Get(s))
+	// Strings and values, that's it.
+	switch val := c.Get(s).(type) {
+	case string:
+		return StrBool(val)
+	case bool:
+		return val
+	}
+
+	// False is ok, if it breaks something, it will be looked into.
+	return false
 }
