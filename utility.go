@@ -43,11 +43,11 @@ func LoadImage(path string) (pixel.Picture, error) {
 
 // Contains will indicate if the rectangle is contained within another
 // rectangle.
-func Contains(src pixel.Rect, target pixel.Rect) bool {
+func Contains(container pixel.Rect, target pixel.Rect) bool {
 
 	// False if any points are outside of the rect.
 	for _, p := range target.Vertices() {
-		if !src.Contains(p) {
+		if !container.Contains(p) {
 			return false
 		}
 	}
@@ -58,12 +58,23 @@ func Contains(src pixel.Rect, target pixel.Rect) bool {
 
 // StrFloat will return a string as a float64
 func StrFloat(s interface{}) float64 {
-	process, _ := strconv.ParseFloat(s.(string), 64)
-	return process
+	// We need to have a string.
+	value, ok := s.(string)
+	if ok {
+		process, _ := strconv.ParseFloat(value, 64)
+		return process
+	}
+	return float64(0)
 }
 
 // StrBool will return a string as a bool
 func StrBool(s interface{}) bool {
-	process, _ := strconv.ParseBool(s.(string))
-	return process
+	// If it's not true, it's false. With this logic, if it's not valid, it's false.
+	value, ok := s.(string)
+	if ok {
+		process, _ := strconv.ParseBool(value)
+		return process
+	}
+	return false
+
 }

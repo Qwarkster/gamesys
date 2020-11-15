@@ -1,6 +1,7 @@
 package gamesys
 
 import (
+	"encoding/xml"
 	"image/color"
 
 	"github.com/faiface/pixel"
@@ -12,8 +13,11 @@ import (
 // and actors. A view should be able to have multiple actors
 // and multiple outputs.
 type Scene struct {
-	// Speed is the speed that this scene will run at.
-	Speed float64
+	// XMLName is how we reference when loading xml information.
+	XMLName xml.Name `xml:"scene"`
+
+	// basespeed is the speed that this scene will run at.
+	Basespeed float64 `xml:"basespeed"`
 
 	// Background is the background colour to clear this screen to.
 	Background color.RGBA
@@ -44,14 +48,14 @@ type Viewable interface {
 // NewScene will create a new scene with a loaded map.
 func NewScene() Scene {
 	// Initialize our scene
-	newScene := Scene{Speed: Config.Float("globalSpeed")}
+	newScene := Scene{Basespeed: Config.Default.Scene.Basespeed}
 
 	// Setup the rest of our scene collections.
 	newScene.Views = make(map[string]*View)
 	newScene.Actors = make(map[string]*Actor)
 
 	// Setup a drawing canvas based on screen size
-	newRect := pixel.R(0, 0, Config.Float("screenWidth"), Config.Float("screenHeight"))
+	newRect := pixel.R(0, 0, Config.System.Window.Width, Config.System.Window.Height)
 	newScene.Rendered = pixelgl.NewCanvas(newRect)
 
 	// Pass it back
@@ -145,7 +149,7 @@ func (s *Scene) AttachActor(actor string) {
 // MoveActor will move an actor within the scene.
 func (s *Scene) MoveActor(actor *Actor, direction int) {
 	// Calculate our base movement speed.
-	speed := s.Speed * Dt
+	speed := s.Basespeed * Dt
 
 	// Adjust to account for speed of the actor we are moving.
 	speed *= actor.Speed

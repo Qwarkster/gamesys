@@ -1,6 +1,7 @@
 package gamesys
 
 import (
+	"encoding/xml"
 	"fmt"
 	"os"
 
@@ -10,6 +11,9 @@ import (
 // Actor is an element that will move around within
 // the view.
 type Actor struct {
+	// XMLName is how we reference when loading xml information
+	XMLName xml.Name `xml:"actor"`
+
 	// Position of the actor, needs to be relative to map
 	Position pixel.Vec
 
@@ -26,7 +30,7 @@ type Actor struct {
 	Clip pixel.Rect
 
 	// Speed will set a speed modifier for the actor.
-	Speed float64
+	Speed float64 `xml:"speed"`
 
 	// Visible determines if we see the sprite or not.
 	Visible bool
@@ -37,7 +41,7 @@ type Actor struct {
 
 // NewActor creates a new actor and returns it
 func NewActor(filename string, position pixel.Vec) Actor {
-	newActor := Actor{Visible: false, Speed: Config.Float("DefaultActorSpeed"), Collision: true, Position: position}
+	newActor := Actor{Visible: false, Speed: Config.Default.Actor.Speed, Collision: true, Position: position}
 	//newActor.Destinations = make([]pixel.Vec, 0)
 	newActor.Src, err = LoadImage("characters/" + filename)
 
