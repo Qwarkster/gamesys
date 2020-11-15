@@ -62,8 +62,8 @@ var (
 // use ConfigurePixel to update the pixel window.
 func ConfigurePixel() {
 	PixelWindow = pixelgl.WindowConfig{
-		Title:  Config.String("title"),
-		Bounds: pixel.R(0, 0, Config.Float("screenWidth"), Config.Float("screenHeight")),
+		Title:  Config.System.Window.Title,
+		Bounds: pixel.R(0, 0, Config.System.Window.Width, Config.System.Window.Height),
 		VSync:  true,
 	}
 }
@@ -109,7 +109,7 @@ func RunScriptAction(action *Action) interface{} {
 func RunScriptFile(file string) {
 	if Config != nil {
 		script := &Script{}
-		script.Load(Config.String("ScriptFolder")+"/"+file+"."+Config.String("ScriptExtension"), false)
+		script.Load(Config.System.Scripting.Dir+"/"+file+"."+Config.System.Scripting.Extension, false)
 		_ = RunScript(script)
 	}
 }
@@ -171,7 +171,7 @@ func Run() {
 				dest := a.Destinations[0]
 				motion := a.Position.To(dest)
 				distance := math.Hypot(motion.X, motion.Y)
-				travel := Dt * (scene.Speed * a.Speed)
+				travel := Dt * (scene.Basespeed * a.Speed)
 
 				// Do we travel all the way or not?
 				if travel >= distance {

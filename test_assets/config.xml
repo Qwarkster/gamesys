@@ -3,7 +3,7 @@
     <!--Basic system requirements-->
     <system>
         <window width="640" height="480" title="RPG Demo" />
-        <scripting dir="scripts" extension="script" />
+        <scripting dir="test_assets/scripts" extension="script" />
     </system>
     <!--Default structure values-->
     <defaults>
