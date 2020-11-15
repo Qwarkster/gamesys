@@ -17,7 +17,7 @@ type Scene struct {
 	XMLName xml.Name `xml:"scene"`
 
 	// basespeed is the speed that this scene will run at.
-	Basespeed float64 `xml:"basespeed"`
+	Basespeed float64 `xml:"basespeed,attr"`
 
 	// Background is the background colour to clear this screen to.
 	Background color.RGBA
