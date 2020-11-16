@@ -7,10 +7,16 @@ import (
 )
 
 func TestLoadConfiguration(t *testing.T) {
-	newconfig := LoadConfiguration("test_assets/config.xml")
+	// Bad config file?
+	newconfig, newerr := LoadConfiguration("badfile")
+	assert.Equal(t, newconfig, &Configuration{}, "Configuration should not be set")
+	assert.Error(t, newerr, "Error should most definitely occur")
+
+	newconfig, newerr = LoadConfiguration("test_assets/config.xml")
 
 	// It works, not empty
 	assert.NotNil(t, newconfig, "Configuration should not be nil")
+	assert.NoError(t, newerr, "Error should not occur")
 
 	// We expect some things
 	assert.NotNil(t, newconfig.System, "Our system should have configuration information")

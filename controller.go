@@ -6,6 +6,14 @@ import (
 	"github.com/faiface/pixel/pixelgl"
 )
 
+var (
+	// LastMove should be the last time we cycled
+	LastMove time.Time
+
+	// Dt will be our system update timing
+	Dt float64
+)
+
 // Controller will handle keystrokes and perform the expected
 // functions. These functions will be setup in the main app.
 type Controller struct {

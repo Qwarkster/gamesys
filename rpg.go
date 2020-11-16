@@ -2,7 +2,6 @@ package gamesys
 
 import (
 	"math"
-	"time"
 
 	"github.com/faiface/pixel"
 	"github.com/faiface/pixel/pixelgl"
@@ -49,12 +48,6 @@ var (
 
 	// Logic will be the function that runs the game logic.
 	Logic func()
-
-	// LastMove should be the last time we cycled
-	LastMove time.Time
-
-	// Dt will be our system update timing
-	Dt float64
 )
 
 // ConfigurePixel will build up the pixel configuration from our game
