@@ -18,4 +18,8 @@ func TestLoadConfiguration(t *testing.T) {
 	// Check our window settings
 	assert.Equal(t, float64(640), newconfig.System.Window.Width, "Width should be a float")
 	assert.Equal(t, float64(480), newconfig.System.Window.Height, "Height should be a float")
+
+	// Are our speeds failing?
+	assert.Equal(t, 200.0, newconfig.Default.Scene.Basespeed, "Basespeed should not be 0")
+	assert.Equal(t, 1.0, newconfig.Default.Actor.Speed, "Actor speed modifier should not be 0")
 }

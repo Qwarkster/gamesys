@@ -6,12 +6,8 @@
         <scripting dir="test_assets/scripts" extension="script" />
     </system>
     <!--Default structure values-->
-    <defaults>
-        <scene>
-            <basespeed>200</basespeed>
-        </scene>
-        <actor>
-            <speed>1</speed>
-        </actor>
-    </defaults>
+    <default>
+        <scene basespeed="200" />
+        <actor speed="1" />
+    </default>
 </configuration>
