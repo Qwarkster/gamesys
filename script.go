@@ -21,12 +21,10 @@ type Script struct {
 	Actions []*Action
 }
 
-// Add will add the given event onto the end of our collection. It will
-// return the index of the added command. This is useful when maintaining a
-// collection of custom actions as opposed to a sequence.
-func (s *Script) Add(action string, args ...interface{}) int {
-	s.Actions = append(s.Actions, &Action{Action: action, Args: args})
-	return len(s.Actions) - 1
+// NewScript will return a new, empty script.
+func NewScript() *Script {
+	newScript := &Script{Actions: make([]*Action, 0)}
+	return newScript
 }
 
 // Load will open up the requested script file and parse the actions into
@@ -69,13 +67,22 @@ func (s *Script) Load(file string, appendScript bool) error {
 		}
 
 		// Add our action to our script
-		s.Actions = append(s.Actions, &Action{Action: action, Args: args})
+		//s.Actions = append(s.Actions, &Action{Action: action, Args: args})
+		_ = s.Add(action, args)
 	}
 
 	return nil
 }
 
-// ScriptAction will hold the actual content of the actions.
+// Add will add the given event onto the end of our collection. It will
+// return the index of the added command. This is useful when maintaining a
+// collection of custom actions as opposed to a sequence.
+func (s *Script) Add(action string, args ...interface{}) int {
+	s.Actions = append(s.Actions, &Action{Action: action, Args: args})
+	return len(s.Actions) - 1
+}
+
+// ScriptAction will hold the implementation of script actions.
 type ScriptAction struct {
 	Action string
 	Runner func([]interface{}) interface{}

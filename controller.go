@@ -35,13 +35,11 @@ type Handler struct {
 
 // Initialize will prepare our empty array of Handlers
 func (c *Controller) Initialize() {
-	// We will have something here at some point
-
 	// Set the starting time.
 	LastMove = time.Now()
 }
 
-// Add will add a handler to our list
+// Add will add a pixelgl button handler to our list
 func (c *Controller) Add(button pixelgl.Button, sensitive bool, action func()) {
 	c.Handlers = append(c.Handlers, &Handler{Button: button, Sensitive: sensitive, Action: action})
 }
