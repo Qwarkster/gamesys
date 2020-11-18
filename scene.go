@@ -3,6 +3,7 @@ package gamesys
 import (
 	"encoding/xml"
 	"image/color"
+	"math"
 
 	"github.com/faiface/pixel"
 	"github.com/faiface/pixel/pixelgl"
@@ -222,6 +223,41 @@ func (s *Scene) MoveActor(actor *Actor, direction int) {
 	}
 }
 
+// ProcessActorDestinations will move the relevent actors towards
+// their respective destinations
+func (s *Scene) ProcessActorDestinations() {
+	for _, a := range s.Actors {
+		if a.Destinations != nil {
+			// Here we need to figure out how far along to move.
+			// We can move by a distance vector.
+			dest := a.Destinations[0]
+			motion := a.Position.To(dest)
+			distance := math.Hypot(motion.X, motion.Y)
+			travel := Dt * (s.Basespeed * a.Speed)
+
+			// Do we travel all the way or not?
+			if travel >= distance {
+				// Here we reach the destination
+				a.MoveTo(dest)
+				if len(a.Destinations) > 1 {
+					a.Destinations = a.Destinations[1:]
+				} else {
+					a.Destinations = nil
+				}
+			} else {
+				// Here we calculate our finished motion position.
+				diff := distance - travel
+				ratio := diff / distance
+				newDistance := pixel.V(ratio*motion.X, ratio*motion.Y)
+				newPos := dest.Sub(newDistance)
+
+				// Move to our hopefully new position
+				a.MoveTo(newPos)
+			}
+		}
+	}
+}
+
 // CollisionFree will indicate the space is free of collisions.
 func (s *Scene) CollisionFree(clip pixel.Rect) bool {
 	// We can skip here so we don't have to worry about it in other places.
@@ -239,14 +275,7 @@ func (s *Scene) CollisionFree(clip pixel.Rect) bool {
 // view's source map. Used for bounds checking against actors and
 // the camera.
 func (s *Scene) Contains(target pixel.Rect) bool {
-
-	// False if any points are outside of the rect.
-	for _, p := range target.Vertices() {
-		if !s.MapData.Img[0].Rect.Contains(p) {
-			return false
-		}
-	}
-	return true
+	return Contains(s.MapData.Img[0].Rect, target)
 }
 
 // Draw will draw the scene out to the provided destination.
