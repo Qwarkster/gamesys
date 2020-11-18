@@ -45,7 +45,7 @@ type Viewable interface {
 	Toggle()
 }
 
-// NewScene will create a new scene with a loaded map.
+// NewScene will create a new scene.
 func NewScene() Scene {
 	// Initialize our scene
 	newScene := Scene{Basespeed: Config.Default.Scene.Basespeed}
