@@ -1,9 +1,6 @@
 package gamesys
 
 import (
-	"math"
-	"time"
-
 	"github.com/faiface/pixel"
 	"github.com/faiface/pixel/pixelgl"
 	"github.com/faiface/pixel/text"
@@ -49,12 +46,6 @@ var (
 
 	// Logic will be the function that runs the game logic.
 	Logic func()
-
-	// LastMove should be the last time we cycled
-	LastMove time.Time
-
-	// Dt will be our system update timing
-	Dt float64
 )
 
 // ConfigurePixel will build up the pixel configuration from our game
@@ -145,13 +136,6 @@ func AddActor(id string, actor Actor) {
 func Run() {
 
 	for !win.Closed() {
-		// Start main game loop, grab active scene.
-		scene := Scenes[ActiveScene]
-
-		// Clear to a color
-		win.Clear(scene.Background)
-		scene.Rendered.Clear(scene.Background)
-
 		// Run our key handler
 		Control.Run(win)
 
@@ -160,40 +144,16 @@ func Run() {
 			Logic()
 		}
 
+		// Start main game loop, grab active scene.
+		scene := Scenes[ActiveScene]
+
 		// Process automatic movements via destinations.
 		// Actors have destinations, the view is irrelevent.
-		for _, a := range scene.Actors {
-			// TODO: Convert this motion code into a method on actor.
+		scene.ProcessActorDestinations()
 
-			if a.Destinations != nil {
-				// Here we need to figure out how far along to move.
-				// We can move by a distance vector.
-				dest := a.Destinations[0]
-				motion := a.Position.To(dest)
-				distance := math.Hypot(motion.X, motion.Y)
-				travel := Dt * (scene.Basespeed * a.Speed)
-
-				// Do we travel all the way or not?
-				if travel >= distance {
-					// Here we reach the destination
-					a.MoveTo(dest)
-					if len(a.Destinations) > 1 {
-						a.Destinations = a.Destinations[1:]
-					} else {
-						a.Destinations = nil
-					}
-				} else {
-					// Here we calculate our finished motion position.
-					diff := distance - travel
-					ratio := diff / distance
-					newDistance := pixel.V(ratio*motion.X, ratio*motion.Y)
-					newPos := dest.Sub(newDistance)
-
-					// Move to our hopefully new position
-					a.MoveTo(newPos)
-				}
-			}
-		}
+		// Clear to a color
+		win.Clear(scene.Background)
+		scene.Rendered.Clear(scene.Background)
 
 		// We have multiple views, we should act accordingly
 		for _, view := range scene.ViewOrder {

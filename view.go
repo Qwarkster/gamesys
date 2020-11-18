@@ -91,15 +91,17 @@ func (v *View) Toggle() {
 // Render will setup the viewable portion of the view.
 func (v *View) Render() {
 	if v.Visible {
+		// Output means we have a map view to process.
 		for _, o := range v.Output {
+			// Center on our actor if we have one.
 			if v.Focus != nil {
-				// Find our actor and center on them.
 				actor := v.Focus
 				actorPos := actor.Position.Sub(v.Camera.Min)
 				movement := actorPos.Sub(v.Rendered.Bounds().Center())
 				v.CenterOn(movement)
 			}
 
+			// Grab the relevent section of map and place onto our view.
 			o.Set(v.Src, v.Camera)
 			o.Draw(v.Rendered, pixel.IM.Moved(v.Rendered.Bounds().Center()))
 		}
@@ -162,13 +164,7 @@ func (v *View) Draw(sceneCanvas *pixelgl.Canvas) {
 // CameraContains will ensure that the camera contains the given
 // rectangle. Should be refactored soon too.
 func (v *View) CameraContains(target pixel.Rect) bool {
-
-	for _, p := range target.Vertices() {
-		if !v.Rendered.Bounds().Contains(p) {
-			return false
-		}
-	}
-	return true
+	return Contains(v.Rendered.Bounds(), target)
 }
 
 // Move will move view position within the window.

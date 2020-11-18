@@ -44,12 +44,16 @@ type Default struct {
 }
 
 // LoadConfiguration setups a configuration from an xml file.
-func LoadConfiguration(file string) *Configuration {
+func LoadConfiguration(file string) (*Configuration, error) {
+	// New empty configuration
+	newconfig := &Configuration{}
+
 	// Open our xmlFile
 	xmlFile, err := os.Open(file)
 	// if os.Open returns an error then handle it
 	if err != nil {
 		fmt.Println(err)
+		return newconfig, err
 	}
 
 	fmt.Println("Successfully Opened " + file)
@@ -60,8 +64,8 @@ func LoadConfiguration(file string) *Configuration {
 	byteValue, _ := ioutil.ReadAll(xmlFile)
 
 	// Do the unmarshal thing
-	newconfig := &Configuration{}
+
 	xml.Unmarshal(byteValue, &newconfig)
 
-	return newconfig
+	return newconfig, err
 }
