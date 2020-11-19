@@ -3,6 +3,7 @@ package gamesys
 import (
 	"encoding/xml"
 	"image/color"
+	"math"
 
 	"github.com/faiface/pixel"
 	"github.com/faiface/pixel/pixelgl"
@@ -36,6 +37,9 @@ type Scene struct {
 
 	// MapData is the tiled data object.
 	MapData *Map
+
+	// Engine will be the reference to the engine we belong to.
+	Engine *Engine
 }
 
 // Viewable will be useful at some point.
@@ -247,6 +251,56 @@ func (s *Scene) Contains(target pixel.Rect) bool {
 		}
 	}
 	return true
+}
+
+// ProcessActorDestinations will process any automated motions based on the
+// destination lists of actors.
+func (s *Scene) ProcessActorDestinations() {
+	for _, a := range s.Actors {
+		// TODO: Convert this motion code into a method on actor.
+
+		if a.Destinations != nil {
+			// Here we need to figure out how far along to move.
+			// We can move by a distance vector.
+			dest := a.Destinations[0]
+			motion := a.Position.To(dest)
+			distance := math.Hypot(motion.X, motion.Y)
+			travel := s.Engine.Dt * (s.Basespeed * a.Speed)
+
+			// Do we travel all the way or not?
+			if travel >= distance {
+				// Here we reach the destination
+				a.MoveTo(dest)
+				if len(a.Destinations) > 1 {
+					a.Destinations = a.Destinations[1:]
+				} else {
+					a.Destinations = nil
+				}
+			} else {
+				// Here we calculate our finished motion position.
+				diff := distance - travel
+				ratio := diff / distance
+				newDistance := pixel.V(ratio*motion.X, ratio*motion.Y)
+				newPos := dest.Sub(newDistance)
+
+				// Move to our hopefully new position
+				a.MoveTo(newPos)
+			}
+		}
+	}
+}
+
+// Render will draw our views onto our scene canvas.
+func (s *Scene) Render() {
+	for _, view := range s.ViewOrder {
+		v := s.Views[view]
+		// Render our view to canvas.
+		v.Render()
+
+		// Draw onto our scene
+		v.Draw(s.Rendered)
+		v.Rendered.Clear(v.Background)
+	}
 }
 
 // Draw will draw the scene out to the provided destination.
