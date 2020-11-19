@@ -40,8 +40,8 @@ type Actor struct {
 }
 
 // NewActor creates a new actor and returns it
-func NewActor(filename string, position pixel.Vec) Actor {
-	newActor := Actor{Visible: false, Speed: Config.Default.Actor.Speed, Collision: true, Position: position}
+func (e *Engine) NewActor(filename string, position pixel.Vec) *Actor {
+	newActor := &Actor{Visible: false, Speed: e.Config.Default.Actor.Speed, Collision: true, Position: position}
 	//newActor.Destinations = make([]pixel.Vec, 0)
 	newActor.Src, err = LoadImage("characters/" + filename)
 

@@ -99,7 +99,7 @@ func (e *Engine) Initialize() {
 
 	// Now we can setup our core action library.
 	// TODO: This is too specific, should break it out of basic initialization.
-	CreateCoreActions()
+	e.CreateCoreActions()
 }
 
 // RunScriptAction will run the specified script action.

@@ -49,17 +49,17 @@ type Viewable interface {
 	Toggle()
 }
 
-// NewScene will create a new scene with a loaded map.
-func NewScene() Scene {
+// NewScene will create a new scene.
+func (e *Engine) NewScene() *Scene {
 	// Initialize our scene
-	newScene := Scene{Basespeed: Config.Default.Scene.Basespeed}
+	newScene := &Scene{Basespeed: e.Config.Default.Scene.Basespeed}
 
 	// Setup the rest of our scene collections.
 	newScene.Views = make(map[string]*View)
 	newScene.Actors = make(map[string]*Actor)
 
 	// Setup a drawing canvas based on screen size
-	newRect := pixel.R(0, 0, Config.System.Window.Width, Config.System.Window.Height)
+	newRect := pixel.R(0, 0, e.Config.System.Window.Width, e.Config.System.Window.Height)
 	newScene.Rendered = pixelgl.NewCanvas(newRect)
 
 	// Pass it back
@@ -68,9 +68,9 @@ func NewScene() Scene {
 
 // NewMapScene will start a new scene with a mapfile. In this way we allow
 // a scene to be run that has no map attached.
-func NewMapScene(file string) Scene {
+func (e *Engine) NewMapScene(file string) *Scene {
 	// Start with a basic scene.
-	newScene := NewScene()
+	newScene := e.NewScene()
 
 	// Load our map file
 	newMap := NewMap(file)
@@ -86,24 +86,24 @@ func NewMapScene(file string) Scene {
 }
 
 // GetScene should grab a scene for easy reference.
-func GetScene(id string) *Scene {
-	returnScene := Scenes[id]
-	return &returnScene
+func (e *Engine) GetScene(id string) *Scene {
+	returnScene := e.Scenes[id]
+	return returnScene
 }
 
 // GetActiveScene will get the currently active scene.
-func GetActiveScene() *Scene {
-	return GetScene(ActiveScene)
+func (e *Engine) GetActiveScene() *Scene {
+	return e.ActiveScene
 }
 
 // SetBackground will set the background color of the scene.
-func (s Scene) SetBackground(bgcolor string) {
+func (s *Scene) SetBackground(bgcolor string) {
 	s.Background = colornames.Map[bgcolor]
 }
 
 // StartMapView sets a view up to use the scene map
 // data.
-func (s Scene) StartMapView(view string) {
+func (s *Scene) StartMapView(view string) {
 	// We should only be processing map data on a map
 	// view, so this code needs a better home.
 	if s.MapData != nil {
@@ -131,12 +131,12 @@ func (s *Scene) ActorsFromMapFile() {
 			startPos := pixel.V(obj.X, newY)
 
 			// Create actor and populate fields.
-			newActor := NewActor(file, startPos)
+			newActor := s.Engine.NewActor(file, startPos)
 			newActor.Visible = obj.Visible
 			newActor.Collision = collision
 
 			// Add to main list.
-			AddActor(actorID, newActor)
+			s.Engine.AddActor(actorID, newActor)
 
 			// Attach this to the scene.
 			s.AttachActor(actorID)
@@ -146,14 +146,14 @@ func (s *Scene) ActorsFromMapFile() {
 
 // AttachActor will attach an actor to the scene.
 func (s *Scene) AttachActor(actor string) {
-	newActor := Actors[actor]
-	s.Actors[actor] = &newActor
+	newActor := s.Engine.Actors[actor]
+	s.Actors[actor] = newActor
 }
 
 // MoveActor will move an actor within the scene.
 func (s *Scene) MoveActor(actor *Actor, direction int) {
 	// Calculate our base movement speed.
-	speed := s.Basespeed * Dt
+	speed := s.Basespeed * s.Engine.Dt
 
 	// Adjust to account for speed of the actor we are moving.
 	speed *= actor.Speed
@@ -257,8 +257,6 @@ func (s *Scene) Contains(target pixel.Rect) bool {
 // destination lists of actors.
 func (s *Scene) ProcessActorDestinations() {
 	for _, a := range s.Actors {
-		// TODO: Convert this motion code into a method on actor.
-
 		if a.Destinations != nil {
 			// Here we need to figure out how far along to move.
 			// We can move by a distance vector.
