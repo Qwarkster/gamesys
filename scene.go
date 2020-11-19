@@ -38,21 +38,15 @@ type Scene struct {
 	// MapData is the tiled data object.
 	MapData *Map
 
-	// Engine will be the reference to the engine we belong to.
+	// Engine is the engine this scene belongs to.
 	Engine *Engine
 }
 
-// Viewable will be useful at some point.
-type Viewable interface {
-	Show()
-	Hide()
-	Toggle()
-}
-
-// NewScene will create a new scene.
+// NewScene will create a new scene. We use the already loaded configuration to
+// initialize it. It should crash amazingly when there's no config loaded.
 func (e *Engine) NewScene() *Scene {
 	// Initialize our scene
-	newScene := &Scene{Basespeed: e.Config.Default.Scene.Basespeed}
+	newScene := &Scene{Basespeed: e.Config.Default.Scene.Basespeed, Engine: e}
 
 	// Setup the rest of our scene collections.
 	newScene.Views = make(map[string]*View)
@@ -87,8 +81,7 @@ func (e *Engine) NewMapScene(file string) *Scene {
 
 // GetScene should grab a scene for easy reference.
 func (e *Engine) GetScene(id string) *Scene {
-	returnScene := e.Scenes[id]
-	return returnScene
+	return e.Scenes[id]
 }
 
 // GetActiveScene will get the currently active scene.
@@ -135,7 +128,7 @@ func (s *Scene) ActorsFromMapFile() {
 			newActor.Visible = obj.Visible
 			newActor.Collision = collision
 
-			// Add to main list.
+			// Add to our engine.
 			s.Engine.AddActor(actorID, newActor)
 
 			// Attach this to the scene.
@@ -146,8 +139,7 @@ func (s *Scene) ActorsFromMapFile() {
 
 // AttachActor will attach an actor to the scene.
 func (s *Scene) AttachActor(actor string) {
-	newActor := s.Engine.Actors[actor]
-	s.Actors[actor] = newActor
+	s.Actors[actor] = s.Engine.Actors[actor]
 }
 
 // MoveActor will move an actor within the scene.
@@ -178,46 +170,13 @@ func (s *Scene) MoveActor(actor *Actor, direction int) {
 	newPos := actor.Position.Add(movement)
 	newClip := actor.Clip.Moved(movement)
 
-	// We should not be doing the following stuff the way
-	// we are doing it.
-
-	// We need to find the containing view
-	v := &View{}
-	for _, view := range s.Views {
-		if view.Focus == actor {
-			v = view
-		}
-	}
-
-	// If we have the focus, keep the actor on the screen.
-	if v != nil && v.Focus == actor {
-		// We can move only if we are within our limits.
-		if v.CameraContains(newClip.Moved(pixel.ZV.Sub(v.Camera.Min))) {
-			// We will check for collision here
-			if actor.Collision {
-				if s.CollisionFree(newClip) {
-					// All is good to move safely.
-					move = true
-				}
-			} else {
-				// In screen but not checking for collisions
-				move = true
-			}
-		} else if s.Contains(newClip) {
+	if actor.Collision {
+		if s.CollisionFree(newClip) {
+			// All is good to move safely.
 			move = true
 		}
-
-	} else {
-
-		// We can still enable collisions
-		if actor.Collision {
-			if s.CollisionFree(newClip) {
-				move = true
-			}
-		} else {
-			move = true
-		}
-
+	} else if s.Contains(newClip) {
+		move = true
 	}
 
 	// Now to do what we gotta do.

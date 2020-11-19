@@ -63,6 +63,13 @@ type Engine struct {
 	Dt float64
 }
 
+// Viewable will be useful at some point.
+type Viewable interface {
+	Show()
+	Hide()
+	Toggle()
+}
+
 // ConfigurePixel will build up the pixel configuration from our game
 // configuration. In this way if any window options are changed, we simply
 // use ConfigurePixel to update the pixel window.
@@ -75,7 +82,9 @@ func (e *Engine) ConfigurePixel() {
 }
 
 // Initialize starts up the RPG engine
-func (e *Engine) Initialize() {
+func (e *Engine) Initialize(file string) {
+	e.Config = LoadConfiguration(file)
+
 	// Set our pixel configuration
 	e.ConfigurePixel()
 
