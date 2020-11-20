@@ -62,7 +62,7 @@ type View struct {
 // at this point, which is how it should be.
 func (s *Scene) NewView(id string, position pixel.Vec, camera pixel.Rect) *View {
 	// A new view with some of our fields.
-	newView := &View{Visible: false, Position: position, Camera: camera}
+	newView := &View{Visible: false, Position: position, Camera: camera, Scene: s, Engine: s.Engine}
 
 	// The canvas we prepare and flip to screen.
 	newView.Rendered = pixelgl.NewCanvas(newView.Camera)
