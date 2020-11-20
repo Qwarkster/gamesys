@@ -84,7 +84,7 @@ func (e *Engine) ConfigurePixel() {
 // Initialize starts up the RPG engine
 func (e *Engine) Initialize(file string) {
 	// Setup initial config
-	e.Config = LoadConfiguration(file)
+	e.Config, err = LoadConfiguration(file)
 
 	// Set our pixel configuration
 	e.ConfigurePixel()
