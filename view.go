@@ -50,13 +50,19 @@ type View struct {
 
 	// Speed is the speed modifier of this camera, not used yet.
 	Speed float64
+
+	// Scene will be the scene this view is a part of.
+	Scene *Scene
+
+	// Engine is passed through for ease of access
+	Engine *Engine
 }
 
 // NewView will create and return a new view. It's not tied to a map
 // at this point, which is how it should be.
-func NewView(id string, position pixel.Vec, camera pixel.Rect) View {
+func (s *Scene) NewView(id string, position pixel.Vec, camera pixel.Rect) *View {
 	// A new view with some of our fields.
-	newView := View{Visible: false, Position: position, Camera: camera}
+	newView := &View{Visible: false, Position: position, Camera: camera}
 
 	// The canvas we prepare and flip to screen.
 	newView.Rendered = pixelgl.NewCanvas(newView.Camera)
@@ -108,7 +114,7 @@ func (v *View) Render() {
 
 		// Now we work on the actors on the screen here.
 		for _, a := range v.VisibleActors {
-			scene := GetActiveScene()
+			scene := v.Engine.GetActiveScene()
 			scene.Actors[a].Draw(v)
 		}
 

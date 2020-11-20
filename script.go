@@ -89,8 +89,8 @@ type ScriptAction struct {
 }
 
 // NewScriptAction will create and return a new ScriptAction.
-func NewScriptAction(action string, runner func([]interface{}) interface{}) ScriptAction {
-	newScriptAction := ScriptAction{Action: action, Runner: runner}
+func NewScriptAction(action string, runner func([]interface{}) interface{}) *ScriptAction {
+	newScriptAction := &ScriptAction{Action: action, Runner: runner}
 
 	return newScriptAction
 }

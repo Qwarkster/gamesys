@@ -19,6 +19,9 @@ var (
 type Controller struct {
 	// Handlers are the connected keystrokes and functions.
 	Handlers []*Handler
+
+	// Engine is the engine the controller is running on.
+	Engine *Engine
 }
 
 // Handler is our structure that we will create and add to the controller
@@ -36,7 +39,7 @@ type Handler struct {
 // Initialize will prepare our empty array of Handlers
 func (c *Controller) Initialize() {
 	// Set the starting time.
-	LastMove = time.Now()
+	c.Engine.LastMove = time.Now()
 }
 
 // Add will add a pixelgl button handler to our list
@@ -47,8 +50,8 @@ func (c *Controller) Add(button pixelgl.Button, sensitive bool, action func()) {
 // Run will loop through our controllers running any actions
 func (c *Controller) Run(win *pixelgl.Window) {
 	// Manage timing
-	Dt = time.Since(LastMove).Seconds()
-	LastMove = time.Now()
+	c.Engine.Dt = time.Since(c.Engine.LastMove).Seconds()
+	c.Engine.LastMove = time.Now()
 
 	for _, h := range c.Handlers {
 		if h.Sensitive {

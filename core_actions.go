@@ -6,7 +6,7 @@ import (
 
 // CreateCoreActions sets up the basic scripting actions that will
 // always be included in the system.
-func CreateCoreActions() {
+func (e *Engine) CreateCoreActions() {
 	// ***********************************
 	// NewScene will create a basic scene.
 	// ===================================
@@ -18,15 +18,15 @@ func CreateCoreActions() {
 		bgcolor := args[1].(string)
 
 		// Create the new scene.
-		newScene := NewScene()
+		newScene := e.NewScene()
 		newScene.SetBackground(bgcolor)
 
 		// Attach our scene.
-		AddScene(id, newScene)
+		e.AddScene(id, newScene)
 
 		return nil
 	})
-	ScriptActions[newScript.Action] = newScript
+	e.ScriptActions[newScript.Action] = newScript
 
 	// *****************************************************
 	// NewMapScene will create a scene with a preloaded map.
@@ -40,15 +40,15 @@ func CreateCoreActions() {
 		bgcolor := args[2].(string)
 
 		// Create the new scene.
-		newScene := NewMapScene(file)
+		newScene := e.NewMapScene(file)
 		newScene.SetBackground(bgcolor)
 
 		// Attach our scene.
-		AddScene(id, newScene)
+		e.AddScene(id, newScene)
 
 		return nil
 	})
-	ScriptActions[newScript.Action] = newScript
+	e.ScriptActions[newScript.Action] = newScript
 
 	// ************************************************
 	// NewView will load a map and attach a view to it.
@@ -66,27 +66,27 @@ func CreateCoreActions() {
 		bgcolor := args[6].(string)
 
 		// Grab the scene we will be working with.
-		scene := Scenes[sceneID]
+		scene := e.Scenes[sceneID]
 
 		// Setup the position and camera rectangle.
 		newPos := pixel.V(x, y)
 		newCam := pixel.R(0, 0, width, height)
 
 		// Create and add to our system.
-		newView := NewView(id, newPos, newCam)
+		newView := scene.NewView(id, newPos, newCam)
 
 		// Set our background color on the view.
 		newView.SetBackground(bgcolor)
 
-		scene.Views[id] = &newView
+		scene.Views[id] = newView
 		scene.ViewOrder = append(scene.ViewOrder, id)
 
 		// Back into the collection
-		Scenes[sceneID] = scene
+		e.Scenes[sceneID] = scene
 
 		return nil
 	})
-	ScriptActions[newScript.Action] = newScript
+	e.ScriptActions[newScript.Action] = newScript
 
 	// *********************************************************
 	// StartMapView will setup a view to use the scene map data.
@@ -99,11 +99,11 @@ func CreateCoreActions() {
 		view := args[1].(string)
 
 		// This is an easy one we hope.
-		Scenes[scene].StartMapView(view)
+		e.Scenes[scene].StartMapView(view)
 
 		return nil
 	})
-	ScriptActions[newScript.Action] = newScript
+	e.ScriptActions[newScript.Action] = newScript
 
 	// **************************************
 	// ShowView will show the specified view.
@@ -116,11 +116,11 @@ func CreateCoreActions() {
 		view := args[1].(string)
 
 		// Show our view.
-		Scenes[scene].Views[view].Show()
+		e.Scenes[scene].Views[view].Show()
 
 		return nil
 	})
-	ScriptActions[newScript.Action] = newScript
+	e.ScriptActions[newScript.Action] = newScript
 
 	// **********************************************************
 	// NewActor will load a new actor. All visibility and collision options
@@ -138,23 +138,25 @@ func CreateCoreActions() {
 		visible := StrBool(args[5])
 		collision := StrBool(args[6])
 
+		// Get our scene first
+		scene := e.Scenes[sceneID]
+
 		// This area is copied right now, need to find the right home for it.
 		// Create actor and populate fields.
-		newActor := NewActor(file, pixel.Vec{X: x, Y: y})
+		newActor := e.NewActor(file, pixel.Vec{X: x, Y: y})
 		newActor.Visible = visible
 		newActor.Collision = collision
 
 		// Add to main list.
-		AddActor(id, newActor)
+		e.AddActor(id, newActor)
 
 		// Attach this to the scene.
-		scene := Scenes[sceneID]
 		scene.AttachActor(id)
-		Scenes[sceneID] = scene
+		e.Scenes[sceneID] = scene
 
 		return nil
 	})
-	ScriptActions[newScript.Action] = newScript
+	e.ScriptActions[newScript.Action] = newScript
 
 	// ****************************************************
 	// ViewFocus will set which actor a view is focused on.
@@ -168,13 +170,13 @@ func CreateCoreActions() {
 		actor := args[2].(string)
 
 		// Acting on a view so this is something for sanity.
-		view := Scenes[scene].Views[viewID]
+		view := e.Scenes[scene].Views[viewID]
 
-		view.FocusOn(Scenes[scene].Actors[actor])
+		view.FocusOn(e.Scenes[scene].Actors[actor])
 
 		return nil
 	})
-	ScriptActions[newScript.Action] = newScript
+	e.ScriptActions[newScript.Action] = newScript
 
 	// ********************************************************************
 	// ActorVisible will setup or add to the list on the view of the actors
@@ -191,12 +193,12 @@ func CreateCoreActions() {
 		// Attach our actor to the given views.
 		for _, v := range views {
 			view := v.(string)
-			Scenes[scene].Views[view].VisibleActors = append(Scenes[scene].Views[view].VisibleActors, actor)
+			e.Scenes[scene].Views[view].VisibleActors = append(e.Scenes[scene].Views[view].VisibleActors, actor)
 		}
 
 		return nil
 	})
-	ScriptActions[newScript.Action] = newScript
+	e.ScriptActions[newScript.Action] = newScript
 
 	// *********************************************
 	// ActorSpeed will set the actor speed modifier.
@@ -210,11 +212,11 @@ func CreateCoreActions() {
 		speed := StrFloat(args[2])
 
 		// Set the speed on our actor
-		Scenes[scene].Actors[actor].Speed = speed
+		e.Scenes[scene].Actors[actor].Speed = speed
 
 		return nil
 	})
-	ScriptActions[newScript.Action] = newScript
+	e.ScriptActions[newScript.Action] = newScript
 
 	// ***********************************************************************
 	// MoveActor will move an actor to the specified destination. The instant
@@ -231,7 +233,7 @@ func CreateCoreActions() {
 		y := StrFloat(args[3])
 		instant := StrBool(args[4])
 
-		actor := Scenes[scene].Actors[actorID]
+		actor := e.Scenes[scene].Actors[actorID]
 
 		// If instant, then we just move it.
 		if instant {
@@ -243,7 +245,7 @@ func CreateCoreActions() {
 
 		return nil
 	})
-	ScriptActions[newScript.Action] = newScript
+	e.ScriptActions[newScript.Action] = newScript
 
 	// **********************************************************************
 	// MoveView will move the view accordingly. Instantaneous motion for now,
@@ -258,9 +260,9 @@ func CreateCoreActions() {
 		x := StrFloat(args[2])
 		y := StrFloat(args[3])
 
-		Scenes[scene].Views[view].Move(pixel.V(x, y))
+		e.Scenes[scene].Views[view].Move(pixel.V(x, y))
 
 		return nil
 	})
-	ScriptActions[newScript.Action] = newScript
+	e.ScriptActions[newScript.Action] = newScript
 }

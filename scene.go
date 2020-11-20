@@ -37,26 +37,23 @@ type Scene struct {
 
 	// MapData is the tiled data object.
 	MapData *Map
+
+	// Engine is the engine this scene belongs to.
+	Engine *Engine
 }
 
-// Viewable will be useful at some point.
-type Viewable interface {
-	Show()
-	Hide()
-	Toggle()
-}
-
-// NewScene will create a new scene.
-func NewScene() Scene {
+// NewScene will create a new scene. We use the already loaded configuration to
+// initialize it. It should crash amazingly when there's no config loaded.
+func (e *Engine) NewScene() *Scene {
 	// Initialize our scene
-	newScene := Scene{Basespeed: Config.Default.Scene.Basespeed}
+	newScene := &Scene{Basespeed: e.Config.Default.Scene.Basespeed, Engine: e}
 
 	// Setup the rest of our scene collections.
 	newScene.Views = make(map[string]*View)
 	newScene.Actors = make(map[string]*Actor)
 
 	// Setup a drawing canvas based on screen size
-	newRect := pixel.R(0, 0, Config.System.Window.Width, Config.System.Window.Height)
+	newRect := pixel.R(0, 0, e.Config.System.Window.Width, e.Config.System.Window.Height)
 	newScene.Rendered = pixelgl.NewCanvas(newRect)
 
 	// Pass it back
@@ -65,9 +62,9 @@ func NewScene() Scene {
 
 // NewMapScene will start a new scene with a mapfile. In this way we allow
 // a scene to be run that has no map attached.
-func NewMapScene(file string) Scene {
+func (e *Engine) NewMapScene(file string) *Scene {
 	// Start with a basic scene.
-	newScene := NewScene()
+	newScene := e.NewScene()
 
 	// Load our map file
 	newMap := NewMap(file)
@@ -83,24 +80,23 @@ func NewMapScene(file string) Scene {
 }
 
 // GetScene should grab a scene for easy reference.
-func GetScene(id string) *Scene {
-	returnScene := Scenes[id]
-	return &returnScene
+func (e *Engine) GetScene(id string) *Scene {
+	return e.Scenes[id]
 }
 
 // GetActiveScene will get the currently active scene.
-func GetActiveScene() *Scene {
-	return GetScene(ActiveScene)
+func (e *Engine) GetActiveScene() *Scene {
+	return e.ActiveScene
 }
 
 // SetBackground will set the background color of the scene.
-func (s Scene) SetBackground(bgcolor string) {
+func (s *Scene) SetBackground(bgcolor string) {
 	s.Background = colornames.Map[bgcolor]
 }
 
 // StartMapView sets a view up to use the scene map
 // data.
-func (s Scene) StartMapView(view string) {
+func (s *Scene) StartMapView(view string) {
 	// We should only be processing map data on a map
 	// view, so this code needs a better home.
 	if s.MapData != nil {
@@ -128,12 +124,12 @@ func (s *Scene) ActorsFromMapFile() {
 			startPos := pixel.V(obj.X, newY)
 
 			// Create actor and populate fields.
-			newActor := NewActor(file, startPos)
+			newActor := s.Engine.NewActor(file, startPos)
 			newActor.Visible = obj.Visible
 			newActor.Collision = collision
 
-			// Add to main list.
-			AddActor(actorID, newActor)
+			// Add to our engine.
+			s.Engine.AddActor(actorID, newActor)
 
 			// Attach this to the scene.
 			s.AttachActor(actorID)
@@ -143,14 +139,13 @@ func (s *Scene) ActorsFromMapFile() {
 
 // AttachActor will attach an actor to the scene.
 func (s *Scene) AttachActor(actor string) {
-	newActor := Actors[actor]
-	s.Actors[actor] = &newActor
+	s.Actors[actor] = s.Engine.Actors[actor]
 }
 
 // MoveActor will move an actor within the scene.
 func (s *Scene) MoveActor(actor *Actor, direction int) {
 	// Calculate our base movement speed.
-	speed := s.Basespeed * Dt
+	speed := s.Basespeed * s.Engine.Dt
 
 	// Adjust to account for speed of the actor we are moving.
 	speed *= actor.Speed
@@ -175,46 +170,13 @@ func (s *Scene) MoveActor(actor *Actor, direction int) {
 	newPos := actor.Position.Add(movement)
 	newClip := actor.Clip.Moved(movement)
 
-	// We should not be doing the following stuff the way
-	// we are doing it.
-
-	// We need to find the containing view
-	v := &View{}
-	for _, view := range s.Views {
-		if view.Focus == actor {
-			v = view
-		}
-	}
-
-	// If we have the focus, keep the actor on the screen.
-	if v != nil && v.Focus == actor {
-		// We can move only if we are within our limits.
-		if v.CameraContains(newClip.Moved(pixel.ZV.Sub(v.Camera.Min))) {
-			// We will check for collision here
-			if actor.Collision {
-				if s.CollisionFree(newClip) {
-					// All is good to move safely.
-					move = true
-				}
-			} else {
-				// In screen but not checking for collisions
-				move = true
-			}
-		} else if s.Contains(newClip) {
+	if actor.Collision {
+		if s.CollisionFree(newClip) {
+			// All is good to move safely.
 			move = true
 		}
-
-	} else {
-
-		// We can still enable collisions
-		if actor.Collision {
-			if s.CollisionFree(newClip) {
-				move = true
-			}
-		} else {
-			move = true
-		}
-
+	} else if s.Contains(newClip) {
+		move = true
 	}
 
 	// Now to do what we gotta do.
@@ -276,6 +238,54 @@ func (s *Scene) CollisionFree(clip pixel.Rect) bool {
 // the camera.
 func (s *Scene) Contains(target pixel.Rect) bool {
 	return Contains(s.MapData.Img[0].Rect, target)
+}
+
+// ProcessActorDestinations will process any automated motions based on the
+// destination lists of actors.
+func (s *Scene) ProcessActorDestinations() {
+	for _, a := range s.Actors {
+		if a.Destinations != nil {
+			// Here we need to figure out how far along to move.
+			// We can move by a distance vector.
+			dest := a.Destinations[0]
+			motion := a.Position.To(dest)
+			distance := math.Hypot(motion.X, motion.Y)
+			travel := s.Engine.Dt * (s.Basespeed * a.Speed)
+
+			// Do we travel all the way or not?
+			if travel >= distance {
+				// Here we reach the destination
+				a.MoveTo(dest)
+				if len(a.Destinations) > 1 {
+					a.Destinations = a.Destinations[1:]
+				} else {
+					a.Destinations = nil
+				}
+			} else {
+				// Here we calculate our finished motion position.
+				diff := distance - travel
+				ratio := diff / distance
+				newDistance := pixel.V(ratio*motion.X, ratio*motion.Y)
+				newPos := dest.Sub(newDistance)
+
+				// Move to our hopefully new position
+				a.MoveTo(newPos)
+			}
+		}
+	}
+}
+
+// Render will draw our views onto our scene canvas.
+func (s *Scene) Render() {
+	for _, view := range s.ViewOrder {
+		v := s.Views[view]
+		// Render our view to canvas.
+		v.Render()
+
+		// Draw onto our scene
+		v.Draw(s.Rendered)
+		v.Rendered.Clear(v.Background)
+	}
 }
 
 // Draw will draw the scene out to the provided destination.
