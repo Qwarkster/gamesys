@@ -67,8 +67,7 @@ func (s *Script) Load(file string, appendScript bool) error {
 		}
 
 		// Add our action to our script
-		//s.Actions = append(s.Actions, &Action{Action: action, Args: args})
-		_ = s.Add(action, args)
+		s.Actions = append(s.Actions, &Action{Action: action, Args: args})
 	}
 
 	return nil
