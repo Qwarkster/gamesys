@@ -83,6 +83,7 @@ func (e *Engine) ConfigurePixel() {
 
 // Initialize starts up the RPG engine
 func (e *Engine) Initialize(file string) {
+	// Setup initial config
 	e.Config = LoadConfiguration(file)
 
 	// Set our pixel configuration
@@ -95,7 +96,7 @@ func (e *Engine) Initialize(file string) {
 	}
 
 	// Setup the initial controller
-	e.Control = &Controller{}
+	e.Control = &Controller{Engine: e}
 	e.Control.Initialize()
 
 	// Setup our basic font

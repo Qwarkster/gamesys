@@ -1,17 +1,87 @@
 package gamesys
 
 import (
+	"os"
 	"testing"
 
+	"github.com/faiface/pixel"
 	"github.com/faiface/pixel/pixelgl"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestNewEngine(t *testing.T) {
-	// I think we need to start the pixelgl engine first, almost first
-	testEngine := &Engine{}
-	testEngine.Initialize("test_assets/config.xml")
-	pixelgl.Run(testEngine.Run)
+var (
+	// testEngine will be our test engine for this process.
+	testEngine *Engine
 
-	assert.NotNil(t, testEngine, "Engine should create just fine")
+	// mainLoop will test if we run our main game loop or not.
+	mainLoop bool
+)
+
+func TestMain(m *testing.M) {
+	// Wrap our testing system.
+	pixelgl.Run(func() {
+		testEngine = &Engine{}
+		testEngine.Initialize("test_assets/config.xml")
+
+		// test1.script contains 3 new scenes
+		testEngine.RunScriptFile("test1")
+
+		// Activate our first scene
+		testEngine.ActivateScene("test1")
+
+		// Decide if we are running main loop or not.
+		mainLoop = true
+
+		results := m.Run()
+		os.Exit(results)
+	})
+
+}
+
+func TestNewEngine(t *testing.T) {
+	// We hate repetition
+	e := testEngine
+
+	// Check all systems are setup after initialization.
+	assert.NotNil(t, e, "We should have an engine here that's not nil.")
+	assert.NotNil(t, e.PixelWindow, "Our pixel configuration should be properly loaded.")
+	assert.NotNil(t, e.win, "Our window should be created properly.")
+	assert.NotNil(t, e.Control, "Our controller should be created properly.")
+	assert.NotNil(t, e.Font, "Our system font should be created properly.")
+	assert.NotNil(t, e.Scenes, "Our scenes map should be initialized properly.")
+	assert.NotNil(t, e.Actors, "Our actors map should be initialized properly.")
+	assert.NotNil(t, e.ScriptActions, "Our script actions should be created properly.")
+
+	// We know we should have at least 1 core action for now.
+	assert.Greater(t, len(e.ScriptActions), 0, "We should have at least 1 ScriptAction configured.")
+}
+
+func TestRunScriptAction(t *testing.T) {
+	// See about a bad script action
+	badscript := testEngine.RunScriptAction(&Action{Action: "blah", Args: make([]interface{}, 3)})
+
+	assert.Nil(t, badscript)
+}
+
+func TestRunScriptFile(t *testing.T) {
+
+	assert.Equal(t, 3, len(testEngine.Scenes), "We should have 3 scenes loaded.")
+}
+
+func TestActivateScene(t *testing.T) {
+
+	assert.NotNil(t, testEngine.ActiveScene, "We should have an active scene")
+}
+
+func TestAddActor(t *testing.T) {
+	testEngine.AddActor("testguy1", &Actor{Position: pixel.V(24, 24)})
+
+	assert.Equal(t, 1, len(testEngine.Actors), "We should only have 1 actor loaded.")
+}
+
+func TestRun(t *testing.T) {
+	if !mainLoop {
+		t.Skip("We don't always want to run the main loop.")
+	}
+	testEngine.Run()
 }
