@@ -1,11 +1,13 @@
 package gamesys
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/faiface/pixel"
 	"github.com/faiface/pixel/pixelgl"
 	"github.com/faiface/pixel/text"
+	"golang.org/x/image/colornames"
 )
 
 // Our system constants we will use
@@ -142,6 +144,53 @@ func (e *Engine) RunScriptFile(file string) {
 	}
 }
 
+// NewScene will create a new scene. We use the already loaded configuration to
+// initialize it. It should crash amazingly when there's no config loaded.
+func (e *Engine) NewScene() *Scene {
+	// Initialize our scene
+	newScene := &Scene{Basespeed: e.Config.Default.Scene.Basespeed, Engine: e}
+
+	// Setup the rest of our scene collections.
+	newScene.Views = make(map[string]*View)
+	newScene.Actors = make(map[string]*Actor)
+
+	// Setup a drawing canvas based on screen size
+	newRect := pixel.R(0, 0, e.Config.System.Window.Width, e.Config.System.Window.Height)
+	newScene.Rendered = pixelgl.NewCanvas(newRect)
+
+	// Pass it back
+	return newScene
+}
+
+// NewMapScene will start a new scene with a mapfile. In this way we allow
+// a scene to be run that has no map attached.
+func (e *Engine) NewMapScene(file string) *Scene {
+	// Start with a basic scene.
+	newScene := e.NewScene()
+
+	// Load our map file
+	newMap := NewMap(file)
+
+	// Attach mapdata to scene.
+	newScene.MapData = &newMap
+
+	// Get our actors from the mapfile.
+	newScene.ActorsFromMapFile()
+
+	// Return the completed scene.
+	return newScene
+}
+
+// GetScene should grab a scene for easy reference.
+func (e *Engine) GetScene(id string) *Scene {
+	return e.Scenes[id]
+}
+
+// GetActiveScene will get the currently active scene.
+func (e *Engine) GetActiveScene() *Scene {
+	return e.ActiveScene
+}
+
 // AddScene will add a scene to the system.
 func (e *Engine) AddScene(id string, scene *Scene) {
 	e.Scenes[id] = scene
@@ -157,6 +206,46 @@ func (e *Engine) AddActor(id string, actor *Actor) {
 	e.Actors[id] = actor
 }
 
+// MessageBox will display a message on screen and then wait for user
+// input.
+func (e *Engine) MessageBox(msg string) {
+	// We have to work on the current scene and edit it's view order to
+	// put the messagebox down last, and remove it when done.
+	scene := e.ActiveScene
+
+	// Create our new messagebox view.
+	newView := scene.NewView(pixel.V(320, 160), pixel.R(0, 0, 200, 100))
+
+	// Create a drawing method.
+	newView.DesignView = func() {
+		// Get our configuration
+		color := colornames.Map[e.Config.System.MessageBox.Color]
+		bgcolor := colornames.Map[e.Config.System.MessageBox.BGColor]
+
+		// Prepare colors
+		newView.Rendered.Clear(bgcolor)
+		msgTxt := text.New(pixel.ZV, e.Font)
+		msgTxt.Color = color
+
+		// TODO: We need to create word wrap within view.
+		fmt.Fprintf(msgTxt, msg)
+
+		// Render to our view, do this better soon.
+		msgTxt.Draw(newView.Rendered, pixel.IM)
+
+	}
+
+	// Set the messagebox flag...
+	// TODO: Make this prettier.
+	e.Control.MessageBox = true
+
+	// The messagebox should be visible
+	newView.Show()
+
+	// Attach the view to the scene.
+	scene.AttachView("messagebox", newView)
+}
+
 // Run will run our main game processes
 func (e *Engine) Run() {
 
@@ -170,6 +259,14 @@ func (e *Engine) Run() {
 
 		// Run our key handler
 		e.Control.Run(e.win)
+
+		// If we have an active messagebox, process key to close it.
+		if e.Control.MessageBox {
+			if e.win.JustPressed(pixelgl.KeyEnter) {
+				e.Control.MessageBox = false
+				e.ActiveScene.RemoveView("messagebox")
+			}
+		}
 
 		// This will process custom game logic, technically optional.
 		if e.Logic != nil {

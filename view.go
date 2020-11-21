@@ -58,18 +58,6 @@ type View struct {
 	Engine *Engine
 }
 
-// NewView will create and return a new view. It's not tied to a map
-// at this point, which is how it should be.
-func (s *Scene) NewView(id string, position pixel.Vec, camera pixel.Rect) *View {
-	// A new view with some of our fields.
-	newView := &View{Visible: false, Position: position, Camera: camera, Scene: s, Engine: s.Engine}
-
-	// The canvas we prepare and flip to screen.
-	newView.Rendered = pixelgl.NewCanvas(newView.Camera)
-
-	return newView
-}
-
 // SetBackground sets the background color of the view.
 func (v *View) SetBackground(bgcolor string) {
 	v.Background = colornames.Map[bgcolor]

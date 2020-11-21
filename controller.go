@@ -22,6 +22,10 @@ type Controller struct {
 
 	// Engine is the engine the controller is running on.
 	Engine *Engine
+
+	// MessageBox indicates that a messagebox is running and to ignore the
+	// control handlers.
+	MessageBox bool
 }
 
 // Handler is our structure that we will create and add to the controller
@@ -40,6 +44,9 @@ type Handler struct {
 func (c *Controller) Initialize() {
 	// Set the starting time.
 	c.Engine.LastMove = time.Now()
+
+	// Should likely not be in a messagebox
+	c.MessageBox = false
 }
 
 // Add will add a pixelgl button handler to our list
@@ -53,14 +60,24 @@ func (c *Controller) Run(win *pixelgl.Window) {
 	c.Engine.Dt = time.Since(c.Engine.LastMove).Seconds()
 	c.Engine.LastMove = time.Now()
 
-	for _, h := range c.Handlers {
-		if h.Sensitive {
-			if win.JustPressed(h.Button) {
-				h.Action()
-			}
-		} else {
-			if win.Pressed(h.Button) {
-				h.Action()
+	controlBlockers := false
+
+	// We will check for messagebox blocker first
+	if c.MessageBox {
+		controlBlockers = true
+	}
+
+	// We will run handlers if they are not blocked.
+	if !controlBlockers {
+		for _, h := range c.Handlers {
+			if h.Sensitive {
+				if win.JustPressed(h.Button) {
+					h.Action()
+				}
+			} else {
+				if win.Pressed(h.Button) {
+					h.Action()
+				}
 			}
 		}
 	}
