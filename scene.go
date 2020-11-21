@@ -42,51 +42,16 @@ type Scene struct {
 	Engine *Engine
 }
 
-// NewScene will create a new scene. We use the already loaded configuration to
-// initialize it. It should crash amazingly when there's no config loaded.
-func (e *Engine) NewScene() *Scene {
-	// Initialize our scene
-	newScene := &Scene{Basespeed: e.Config.Default.Scene.Basespeed, Engine: e}
+// NewView will create and return a new view. It's not tied to a map
+// at this point, which is how it should be.
+func (s *Scene) NewView(position pixel.Vec, camera pixel.Rect) *View {
+	// A new view with some of our fields.
+	newView := &View{Visible: false, Position: position, Camera: camera, Scene: s, Engine: s.Engine}
 
-	// Setup the rest of our scene collections.
-	newScene.Views = make(map[string]*View)
-	newScene.Actors = make(map[string]*Actor)
+	// The canvas we prepare and flip to screen.
+	newView.Rendered = pixelgl.NewCanvas(newView.Camera)
 
-	// Setup a drawing canvas based on screen size
-	newRect := pixel.R(0, 0, e.Config.System.Window.Width, e.Config.System.Window.Height)
-	newScene.Rendered = pixelgl.NewCanvas(newRect)
-
-	// Pass it back
-	return newScene
-}
-
-// NewMapScene will start a new scene with a mapfile. In this way we allow
-// a scene to be run that has no map attached.
-func (e *Engine) NewMapScene(file string) *Scene {
-	// Start with a basic scene.
-	newScene := e.NewScene()
-
-	// Load our map file
-	newMap := NewMap(file)
-
-	// Attach mapdata to scene.
-	newScene.MapData = &newMap
-
-	// Get our actors from the mapfile.
-	newScene.ActorsFromMapFile()
-
-	// Return the completed scene.
-	return newScene
-}
-
-// GetScene should grab a scene for easy reference.
-func (e *Engine) GetScene(id string) *Scene {
-	return e.Scenes[id]
-}
-
-// GetActiveScene will get the currently active scene.
-func (e *Engine) GetActiveScene() *Scene {
-	return e.ActiveScene
+	return newView
 }
 
 // SetBackground will set the background color of the scene.
@@ -105,6 +70,31 @@ func (s *Scene) StartMapView(view string) {
 			pixel.NewSprite(s.Views[view].Src,
 				s.Views[view].Src.Bounds()))
 	}
+}
+
+// AttachView will add a view to the scene. We also need to add it to the view
+// order so that it renders correctly.
+func (s *Scene) AttachView(id string, view *View) {
+	// Add to our view order on the scene.
+	s.ViewOrder = append(s.ViewOrder, id)
+
+	// Add to our scene here
+	s.Views[id] = view
+}
+
+// RemoveView will destroy the view from the scene, also maintaining the vieworder.
+func (s *Scene) RemoveView(id string) {
+	// Loop through current view order, omitting the one matching id
+	newViewOrder := make([]string, len(s.ViewOrder)-1)
+	for _, v := range s.ViewOrder {
+		if v != id {
+			newViewOrder = append(newViewOrder, v)
+		}
+	}
+	s.ViewOrder = newViewOrder
+
+	// Remove our view
+	delete(s.Views, id)
 }
 
 // ActorsFromMapFile will load up the actors that are setup

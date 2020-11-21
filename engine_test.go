@@ -79,9 +79,19 @@ func TestAddActor(t *testing.T) {
 	assert.Equal(t, 1, len(testEngine.Actors), "We should only have 1 actor loaded.")
 }
 
+func TestMessageBox(t *testing.T) {
+	testEngine.MessageBox("Hello there!")
+
+	scene := testEngine.ActiveScene
+
+	assert.NotNil(t, scene.Views["messagebox"], "We should have a messagebox view.")
+	assert.True(t, testEngine.Control.MessageBox)
+}
+
 func TestRun(t *testing.T) {
 	if !mainLoop {
 		t.Skip("We don't always want to run the main loop.")
 	}
+
 	testEngine.Run()
 }

@@ -73,13 +73,12 @@ func (e *Engine) CreateCoreActions() {
 		newCam := pixel.R(0, 0, width, height)
 
 		// Create and add to our system.
-		newView := scene.NewView(id, newPos, newCam)
+		newView := scene.NewView(newPos, newCam)
 
 		// Set our background color on the view.
 		newView.SetBackground(bgcolor)
 
-		scene.Views[id] = newView
-		scene.ViewOrder = append(scene.ViewOrder, id)
+		scene.AttachView(id, newView)
 
 		// Back into the collection
 		e.Scenes[sceneID] = scene

@@ -16,9 +16,10 @@ type Configuration struct {
 
 // System configuration setting.
 type System struct {
-	XMLName   xml.Name  `xml:"system"`
-	Window    Window    `xml:"window"`
-	Scripting Scripting `xml:"scripting"`
+	XMLName    xml.Name   `xml:"system"`
+	Window     Window     `xml:"window"`
+	Scripting  Scripting  `xml:"scripting"`
+	MessageBox MessageBox `xml:"messagebox"`
 }
 
 // Window is the options for starting pixel window.
@@ -34,6 +35,13 @@ type Scripting struct {
 	XMLName   xml.Name `xml:"scripting"`
 	Dir       string   `xml:"dir,attr"`
 	Extension string   `xml:"extension,attr"`
+}
+
+// MessageBox sets options for the system messagebox.
+type MessageBox struct {
+	XMLName xml.Name `xml:"messagebox"`
+	Color   string   `xml:"color,attr"`
+	BGColor string   `xml:"bgcolor,attr"`
 }
 
 // Default object values when not provided.
