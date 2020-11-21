@@ -45,7 +45,7 @@ type Engine struct {
 	ActiveScene *Scene
 
 	// Actors holds the loaded actors for the game. They can be used across
-	// scenes so it's not a good idea to tie them tightly to them. Scenes will
+	// scenes so it's not a good idea to tie them tightly to scenes. Scenes will
 	// hold a list of actors that are visible or running on them.
 	Actors map[string]*Actor
 
@@ -87,6 +87,9 @@ func (e *Engine) ConfigurePixel() {
 func (e *Engine) Initialize(file string) {
 	// Setup initial config
 	e.Config, err = LoadConfiguration(file)
+	if err != nil {
+		panic(err)
+	}
 
 	// Set our pixel configuration
 	e.ConfigurePixel()
@@ -214,7 +217,7 @@ func (e *Engine) MessageBox(msg string) {
 	scene := e.ActiveScene
 
 	// Create our new messagebox view.
-	newView := scene.NewView(pixel.V(320, 160), pixel.R(0, 0, 200, 100))
+	newView := scene.NewView(pixel.V(320, 240), pixel.R(0, 0, 200, 100))
 
 	// Create a drawing method.
 	newView.DesignView = func() {

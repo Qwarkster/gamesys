@@ -86,9 +86,9 @@ func (s *Scene) AttachView(id string, view *View) {
 func (s *Scene) RemoveView(id string) {
 	// Loop through current view order, omitting the one matching id
 	newViewOrder := make([]string, len(s.ViewOrder)-1)
-	for _, v := range s.ViewOrder {
+	for i, v := range s.ViewOrder {
 		if v != id {
-			newViewOrder = append(newViewOrder, v)
+			newViewOrder[i] = v
 		}
 	}
 	s.ViewOrder = newViewOrder
