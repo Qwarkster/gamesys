@@ -16,10 +16,9 @@ type Configuration struct {
 
 // System configuration setting.
 type System struct {
-	XMLName    xml.Name   `xml:"system"`
-	Window     Window     `xml:"window"`
-	Scripting  Scripting  `xml:"scripting"`
-	MessageBox MessageBox `xml:"messagebox"`
+	XMLName   xml.Name  `xml:"system"`
+	Window    Window    `xml:"window"`
+	Scripting Scripting `xml:"scripting"`
 }
 
 // Window is the options for starting pixel window.
@@ -42,13 +41,18 @@ type MessageBox struct {
 	XMLName xml.Name `xml:"messagebox"`
 	Color   string   `xml:"color,attr"`
 	BGColor string   `xml:"bgcolor,attr"`
+	X       float64  `xml:"x,attr"`
+	Y       float64  `xml:"y,attr"`
+	Height  float64  `xml:"height,attr"`
+	Width   float64  `xml:"width,attr"`
 }
 
 // Default object values when not provided.
 type Default struct {
-	XMLName xml.Name `xml:"default"`
-	Scene   Scene    `xml:"scene"`
-	Actor   Actor    `xml:"actor"`
+	XMLName    xml.Name   `xml:"default"`
+	Scene      Scene      `xml:"scene"`
+	Actor      Actor      `xml:"actor"`
+	MessageBox MessageBox `xml:"messagebox"`
 }
 
 // LoadConfiguration setups a configuration from an xml file.

@@ -80,7 +80,7 @@ func TestAddActor(t *testing.T) {
 }
 
 func TestMessageBox(t *testing.T) {
-	testEngine.MessageBox("Hello there!")
+	testEngine.MessageBox("Hello there!\nWe have multiple lines here.\nWhat shall we do with them?")
 
 	scene := testEngine.ActiveScene
 

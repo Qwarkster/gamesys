@@ -212,29 +212,43 @@ func (e *Engine) AddActor(id string, actor *Actor) {
 // MessageBox will display a message on screen and then wait for user
 // input.
 func (e *Engine) MessageBox(msg string) {
+	// Grab our configuration options for simplicity.
+	msgConfig := e.Config.Default.MessageBox
+
 	// We have to work on the current scene and edit it's view order to
 	// put the messagebox down last, and remove it when done.
 	scene := e.ActiveScene
 
 	// Create our new messagebox view.
-	newView := scene.NewView(pixel.V(320, 240), pixel.R(0, 0, 200, 100))
+	x := msgConfig.X
+	y := msgConfig.Y
+	height := msgConfig.Height
+	width := msgConfig.Width
+	newView := scene.NewView(pixel.V(x, y), pixel.R(0, 0, width, height))
 
 	// Create a drawing method.
 	newView.DesignView = func() {
 		// Get our configuration
-		color := colornames.Map[e.Config.System.MessageBox.Color]
-		bgcolor := colornames.Map[e.Config.System.MessageBox.BGColor]
+		color := colornames.Map[msgConfig.Color]
+		bgcolor := colornames.Map[msgConfig.BGColor]
 
 		// Prepare colors
 		newView.Rendered.Clear(bgcolor)
 		msgTxt := text.New(pixel.ZV, e.Font)
 		msgTxt.Color = color
 
+		// Calculate text size offset
+		offsetTxt := text.New(pixel.ZV, e.Font)
+		fmt.Fprint(offsetTxt, "A")
+		offset := offsetTxt.Bounds().H()
+
 		// TODO: We need to create word wrap within view.
 		fmt.Fprintf(msgTxt, msg)
 
 		// Render to our view, do this better soon.
+		newView.Rendered.SetMatrix(pixel.IM.Moved(pixel.V(2, height-offset+2)))
 		msgTxt.Draw(newView.Rendered, pixel.IM)
+		newView.Rendered.SetMatrix(pixel.IM)
 
 	}
 

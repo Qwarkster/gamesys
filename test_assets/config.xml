@@ -4,11 +4,11 @@
     <system>
         <window width="640" height="480" title="RPG Demo" />
         <scripting dir="test_assets/scripts" extension="script" />
-        <messagebox color="white" bgcolor="black" />
     </system>
     <!--Default structure values-->
     <default>
         <scene basespeed="200" />
         <actor speed="1" />
+        <messagebox color="white" bgcolor="black" x="320" y="240" height="100" width="200" />
     </default>
 </configuration>
