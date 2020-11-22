@@ -50,11 +50,11 @@ func (e *Engine) CreateCoreActions() {
 	})
 	e.ScriptActions[newScript.Action] = newScript
 
-	// ************************************************
+	// *************************************************
 	// NewView will load a map and attach a view to it.
-	// ================================================
-	// NewView scene_id view_id x y width height
-	// ------------------------------------------------
+	// =================================================
+	// NewView scene_id view_id x y width height bgcolor
+	// -------------------------------------------------
 	newScript = NewScriptAction("NewView", func(args []interface{}) interface{} {
 		// Setup arguments.
 		sceneID := args[0].(string)
