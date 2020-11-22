@@ -1,3 +1,5 @@
 NewScene test1 aqua
 NewScene test2 maroon
 NewScene test3 chocolate
+NewView  test1 view1 35 35 25 25 cadetblue
+ShowView test1 view1

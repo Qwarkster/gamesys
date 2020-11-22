@@ -44,9 +44,6 @@ type Handler struct {
 func (c *Controller) Initialize() {
 	// Set the starting time.
 	c.Engine.LastMove = time.Now()
-
-	// Should likely not be in a messagebox
-	c.MessageBox = false
 }
 
 // Add will add a pixelgl button handler to our list
