@@ -36,17 +36,6 @@ type Scripting struct {
 	Extension string   `xml:"extension,attr"`
 }
 
-// MessageBox sets options for the system messagebox.
-type MessageBox struct {
-	XMLName xml.Name `xml:"messagebox"`
-	Color   string   `xml:"color,attr"`
-	BGColor string   `xml:"bgcolor,attr"`
-	X       float64  `xml:"x,attr"`
-	Y       float64  `xml:"y,attr"`
-	Height  float64  `xml:"height,attr"`
-	Width   float64  `xml:"width,attr"`
-}
-
 // Default object values when not provided.
 type Default struct {
 	XMLName    xml.Name   `xml:"default"`
@@ -55,29 +44,24 @@ type Default struct {
 	MessageBox MessageBox `xml:"messagebox"`
 }
 
-// LoadConfiguration setups a configuration from an xml file.
+// LoadConfiguration loads a configuration from the provided XML file.
 func LoadConfiguration(file string) (*Configuration, error) {
 	// New empty configuration
 	newconfig := &Configuration{}
 
-	// Open our xmlFile
+	// Open our file, ensuring it closes later.
 	xmlFile, err := os.Open(file)
-	// if os.Open returns an error then handle it
 	if err != nil {
 		fmt.Println(err)
 		return newconfig, err
 	}
-
-	fmt.Println("Successfully Opened " + file)
-	// defer the closing of our xmlFile so that we can parse it later on
 	defer xmlFile.Close()
 
 	// read our opened xmlFile as a byte array.
 	byteValue, _ := ioutil.ReadAll(xmlFile)
 
-	// Do the unmarshal thing
-
-	xml.Unmarshal(byteValue, &newconfig)
+	// Process XML file in the simplest way possible.
+	err = xml.Unmarshal(byteValue, &newconfig)
 
 	return newconfig, err
 }

@@ -80,12 +80,12 @@ func TestAddActor(t *testing.T) {
 }
 
 func TestMessageBox(t *testing.T) {
-	testEngine.MessageBox("Hello there!\nWe have multiple lines here.\nWhat shall we do with them?")
+	testEngine.DisplayMessageBox("Hello there!\nWe have multiple lines here.\nWhat shall we do with them?")
 
 	scene := testEngine.ActiveScene
 
 	assert.NotNil(t, scene.Views["messagebox"], "We should have a messagebox view.")
-	assert.True(t, testEngine.Control.MessageBox)
+	assert.Equal(t, 1, len(testEngine.Control.SystemHandlers), "We should have a system handler set.")
 }
 
 func TestRun(t *testing.T) {
