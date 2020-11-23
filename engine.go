@@ -1,6 +1,8 @@
 package gamesys
 
 import (
+	"fmt"
+	"os"
 	"time"
 
 	"github.com/faiface/pixel"
@@ -68,6 +70,8 @@ type Viewable interface {
 	Show()
 	Hide()
 	Toggle()
+	Render()
+	Draw()
 }
 
 // ConfigurePixel will build up the pixel configuration from our game
@@ -202,6 +206,23 @@ func (e *Engine) ActivateScene(scene string) {
 	e.ActiveScene = e.Scenes[scene]
 }
 
+// NewActor creates a new actor and returns it
+func (e *Engine) NewActor(filename string, position pixel.Vec) *Actor {
+	newActor := &Actor{Visible: false, Speed: e.Config.Default.Actor.Speed, Collision: true, Position: position}
+	//newActor.Destinations = make([]pixel.Vec, 0)
+	newActor.Src, err = LoadImage("characters/" + filename)
+
+	if err != nil {
+		fmt.Printf("Error loading image: %s", err.Error())
+		os.Exit(2)
+	}
+
+	// Create our sprite.
+	newActor.Render()
+
+	return newActor
+}
+
 // AddActor will add an actor to the system.
 func (e *Engine) AddActor(id string, actor *Actor) {
 	e.Actors[id] = actor
@@ -227,13 +248,10 @@ func (e *Engine) Run() {
 		}
 
 		// Process automatic movements via destinations.
-		e.ActiveScene.ProcessActorDestinations()
-
-		// We should render our scene appropriately.
-		e.ActiveScene.Render()
+		scene.ProcessActorDestinations()
 
 		// Time to spit out the scene.
-		scene.Draw(e.win)
+		scene.Draw()
 
 		e.win.Update()
 	}

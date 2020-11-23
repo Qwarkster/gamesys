@@ -99,6 +99,7 @@ func (s *Scene) RemoveView(id string) {
 
 // ActorsFromMapFile will load up the actors that are setup
 // on the current mapfile.
+// TODO: This belongs in our map area, or something like that.
 func (s *Scene) ActorsFromMapFile() {
 	// We can load up the actors from the mapfile data at any time.
 
@@ -184,7 +185,9 @@ func (s *Scene) ProcessActorDestinations() {
 			// We can move by a distance vector.
 			dest := a.Destinations[0]
 			motion := a.Position.To(dest)
+			// distance is how far to our dest
 			distance := math.Hypot(motion.X, motion.Y)
+			// travel is how far we should travel, given game speed
 			travel := Dt * (s.Basespeed * a.Speed)
 
 			// Do we travel all the way or not?
@@ -210,16 +213,15 @@ func (s *Scene) ProcessActorDestinations() {
 	}
 }
 
-// CollisionFree will indicate the space is free of collisions.
+// CollisionFree will indicate the space is free of collisions. It tests
+// against the collision objects that are found in the map file.
 func (s *Scene) CollisionFree(clip pixel.Rect) bool {
-	// We can skip here so we don't have to worry about it in other places.
 	for _, c := range s.MapData.Collision {
 		if c.Intersects(clip) {
 			return false
 		}
 	}
 
-	// So if we skip collision, we are always safe.
 	return true
 }
 
@@ -233,21 +235,16 @@ func (s *Scene) Contains(target pixel.Rect) bool {
 // Render will draw our views onto our scene canvas.
 func (s *Scene) Render() {
 	for _, view := range s.ViewOrder {
-		v := s.Views[view]
-		// Render our view to canvas.
-		v.Render()
-
-		// Draw onto our scene
-		v.Draw(s.Rendered)
-		v.Rendered.Clear(v.Background)
+		s.Views[view].Draw()
 	}
 }
 
-// Draw will draw the scene out to the provided destination.
-func (s *Scene) Draw(win *pixelgl.Window) {
-	// Adjust for the position on the screen
-	win.SetMatrix(pixel.IM.Moved(s.Rendered.Bounds().Center()))
+// Draw will draw the scene out to the Engine win target. This should be the
+// pixelgl.Window reference.
+func (s *Scene) Draw() {
+	// Render scene up to date before drawing to screen
+	s.Render()
 
 	// Now to put the canvas to the screen
-	s.Rendered.Draw(win, pixel.IM)
+	s.Rendered.Draw(s.Engine.win, pixel.IM.Moved(s.Rendered.Bounds().Center()))
 }

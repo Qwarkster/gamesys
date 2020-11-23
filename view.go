@@ -85,6 +85,8 @@ func (v *View) Toggle() {
 // Render will setup the viewable portion of the view.
 func (v *View) Render() {
 	if v.Visible {
+		// Clear the existing view
+		v.Rendered.Clear(v.Background)
 		// Output means we have a map view to process.
 		for _, o := range v.Output {
 			// Center on our actor if we have one.
@@ -102,8 +104,7 @@ func (v *View) Render() {
 
 		// Now we work on the actors on the screen here.
 		for _, a := range v.VisibleActors {
-			scene := v.Engine.GetActiveScene()
-			scene.Actors[a].Draw(v)
+			v.Scene.Actors[a].Draw(v)
 		}
 
 		// See if this breaks first.
@@ -119,7 +120,7 @@ func (v *View) FocusOn(actor *Actor) {
 	v.Focus = actor
 }
 
-// CenterOn will center the map on the actor.
+// CenterOn will center the map on the actor who has the focus on that view.
 func (v *View) CenterOn(movement pixel.Vec) {
 	// Make a new temp camera based on where we would travel.
 	newCamera := v.Camera.Moved(movement)
@@ -145,13 +146,13 @@ func (v *View) CenterOn(movement pixel.Vec) {
 }
 
 // Draw will draw the view to the scene, if it's visible.
-func (v *View) Draw(sceneCanvas *pixelgl.Canvas) {
+func (v *View) Draw() {
 	if v.Visible {
-		// Adjust for the position on the screen
-		sceneCanvas.SetMatrix(pixel.IM.Moved(v.Position))
+		// Ensure our view is rendered and up to date.
+		v.Render()
 
-		// Now to put the canvas to the screen
-		v.Rendered.Draw(sceneCanvas, pixel.IM)
+		// This should draw onto the scene.
+		v.Rendered.Draw(v.Scene.Rendered, pixel.IM.Moved(v.Position))
 	}
 }
 
