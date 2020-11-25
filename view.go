@@ -87,19 +87,22 @@ func (v *View) Render() {
 	if v.Visible {
 		// Clear the existing view
 		v.Rendered.Clear(v.Background)
-		// Output means we have a map view to process.
-		for _, o := range v.Output {
-			// Center on our actor if we have one.
-			if v.Focus != nil {
-				actor := v.Focus
-				actorPos := actor.Position.Sub(v.Camera.Min)
-				movement := actorPos.Sub(v.Rendered.Bounds().Center())
-				v.CenterOn(movement)
-			}
 
-			// Grab the relevent section of map and place onto our view.
-			o.Set(v.Src, v.Camera)
-			o.Draw(v.Rendered, pixel.IM.Moved(v.Rendered.Bounds().Center()))
+		// Output means we have a map view to process.
+		if v.Output != nil {
+			for _, o := range v.Output {
+				// Center on our actor if we have one.
+				if v.Focus != nil {
+					actor := v.Focus
+					actorPos := actor.Position.Sub(v.Camera.Min)
+					movement := actorPos.Sub(v.Rendered.Bounds().Center())
+					v.CenterOn(movement)
+				}
+
+				// Grab the relevent section of map and place onto our view.
+				o.Set(v.Src, v.Camera)
+				o.Draw(v.Rendered, pixel.IM.Moved(v.Rendered.Bounds().Center()))
+			}
 		}
 
 		// Now we work on the actors on the screen here.

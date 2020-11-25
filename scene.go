@@ -151,9 +151,21 @@ func (s *Scene) MoveActor(actor *Actor, direction int) {
 	newClip := actor.Clip.Moved(movement)
 
 	if actor.Collision {
-		if s.CollisionFree(newClip) {
-			// All is good to move safely.
+		if s.MapData != nil {
+			if s.CollisionFree(newClip) {
+				// All is good to move safely.
+				move = true
+			}
+		} else {
+			// No map, find proper view move unless focus and out of range
 			move = true
+			for _, v := range s.Views {
+				if v.Focus == actor {
+					if !v.CameraContains(newClip) {
+						move = false
+					}
+				}
+			}
 		}
 	} else if s.Contains(newClip) {
 		move = true
@@ -219,7 +231,7 @@ func (s *Scene) CollisionFree(clip pixel.Rect) bool {
 // view's source map. Used for bounds checking against actors and
 // the camera.
 func (s *Scene) Contains(target pixel.Rect) bool {
-	return Contains(s.MapData.Img[0].Rect, target)
+	return Contains(s.Rendered.Bounds(), target)
 }
 
 // Render will draw our views onto our scene canvas.
