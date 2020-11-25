@@ -2,6 +2,7 @@ package gamesys
 
 import (
 	"image"
+	"math"
 	"os"
 	"strconv"
 
@@ -11,6 +12,14 @@ import (
 // utility.go will hold functions that don't quite fit within the rpg
 // concept, but are still useful. These functions could potentially be
 // broken out into their own subpackage down the road.
+
+const (
+	// DegRad is a constant to convert to radians.
+	DegRad float64 = math.Pi / 180
+
+	// RadDeg is a constant to convert to degrees.
+	RadDeg float64 = 180 / math.Pi
+)
 
 // FailError will panic and fail on error. Use this on errors we can't
 // really handle gracefully.

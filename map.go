@@ -20,7 +20,7 @@ type Map struct {
 	// The rendered full map
 	Img []*pixel.PictureData
 
-	// Our collision layer
+	// Our collision information, a collection of map objects.
 	Collision []*pixel.Rect
 }
 

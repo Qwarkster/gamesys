@@ -4,6 +4,7 @@
     <system>
         <window width="640" height="480" title="RPG Demo" />
         <scripting dir="test_assets/scripts" extension="script" />
+        <directory characters="test_assets/characters" />
     </system>
     <!--Default structure values-->
     <default>

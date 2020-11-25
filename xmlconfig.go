@@ -19,6 +19,7 @@ type System struct {
 	XMLName   xml.Name  `xml:"system"`
 	Window    Window    `xml:"window"`
 	Scripting Scripting `xml:"scripting"`
+	Directory Directory `xml:"directory"`
 }
 
 // Window is the options for starting pixel window.
@@ -34,6 +35,12 @@ type Scripting struct {
 	XMLName   xml.Name `xml:"scripting"`
 	Dir       string   `xml:"dir,attr"`
 	Extension string   `xml:"extension,attr"`
+}
+
+// Directory will set default directories not set elsewhere
+type Directory struct {
+	XMLName    xml.Name `xml:"directory"`
+	Characters string   `xml:"characters,attr"`
 }
 
 // Default object values when not provided.

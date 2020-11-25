@@ -10,14 +10,6 @@ import (
 	"github.com/faiface/pixel/text"
 )
 
-// Our system constants we will use
-const (
-	NORTH = 0
-	EAST  = 1
-	SOUTH = 2
-	WEST  = 3
-)
-
 var (
 	err error
 )
@@ -209,8 +201,7 @@ func (e *Engine) ActivateScene(scene string) {
 // NewActor creates a new actor and returns it
 func (e *Engine) NewActor(filename string, position pixel.Vec) *Actor {
 	newActor := &Actor{Visible: false, Speed: e.Config.Default.Actor.Speed, Collision: true, Position: position}
-	//newActor.Destinations = make([]pixel.Vec, 0)
-	newActor.Src, err = LoadImage("characters/" + filename)
+	newActor.Src, err = LoadImage(e.Config.System.Directory.Characters + "/" + filename)
 
 	if err != nil {
 		fmt.Printf("Error loading image: %s", err.Error())
@@ -234,10 +225,6 @@ func (e *Engine) Run() {
 	for !e.win.Closed() {
 		// Start main game loop, grab active scene.
 		scene := e.ActiveScene
-
-		// Clear to a color
-		e.win.Clear(scene.Background)
-		scene.Rendered.Clear(scene.Background)
 
 		// Run our key handler
 		e.Control.Run()

@@ -6,14 +6,6 @@ import (
 	"github.com/faiface/pixel/pixelgl"
 )
 
-var (
-	// LastMove should be the last time we cycled
-	LastMove time.Time
-
-	// Dt will be our system update timing
-	Dt float64
-)
-
 // Controller manages the key handlers, running handler methods as appropriate.
 // The current state of the system will depend on what handlers are present. If
 // there are any system handlers present, they will override the application

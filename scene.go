@@ -142,20 +142,9 @@ func (s *Scene) MoveActor(actor *Actor, direction int) {
 	speed *= actor.Speed
 
 	// Our movement values and flags.
-	movement := pixel.ZV
+	movement := pixel.Unit(float64(direction) * DegRad)
+	movement = movement.Scaled(speed)
 	move := false
-
-	// Create movement vector based on direction
-	switch direction {
-	case NORTH:
-		movement.Y = speed
-	case SOUTH:
-		movement.Y -= speed
-	case EAST:
-		movement.X = speed
-	case WEST:
-		movement.X -= speed
-	}
 
 	// Find our new position.
 	newPos := actor.Position.Add(movement)
@@ -188,8 +177,7 @@ func (s *Scene) ProcessActorDestinations() {
 			// distance is how far to our dest
 			distance := math.Hypot(motion.X, motion.Y)
 			// travel is how far we should travel, given game speed
-			travel := Dt * (s.Basespeed * a.Speed)
-
+			travel := s.Engine.Dt * (s.Basespeed * a.Speed)
 			// Do we travel all the way or not?
 			if travel >= distance {
 				// Here we reach the destination
@@ -216,9 +204,11 @@ func (s *Scene) ProcessActorDestinations() {
 // CollisionFree will indicate the space is free of collisions. It tests
 // against the collision objects that are found in the map file.
 func (s *Scene) CollisionFree(clip pixel.Rect) bool {
-	for _, c := range s.MapData.Collision {
-		if c.Intersects(clip) {
-			return false
+	if s.MapData != nil {
+		for _, c := range s.MapData.Collision {
+			if c.Intersects(clip) {
+				return false
+			}
 		}
 	}
 
@@ -234,6 +224,7 @@ func (s *Scene) Contains(target pixel.Rect) bool {
 
 // Render will draw our views onto our scene canvas.
 func (s *Scene) Render() {
+	s.Rendered.Clear(s.Background)
 	for _, view := range s.ViewOrder {
 		s.Views[view].Draw()
 	}
@@ -246,5 +237,6 @@ func (s *Scene) Draw() {
 	s.Render()
 
 	// Now to put the canvas to the screen
+	s.Engine.win.Clear(s.Background)
 	s.Rendered.Draw(s.Engine.win, pixel.IM.Moved(s.Rendered.Bounds().Center()))
 }
