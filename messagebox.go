@@ -51,7 +51,7 @@ func (e *Engine) DisplayMessageBox(msg string) {
 
 		// Calculate text size offset
 		offsetTxt := text.New(pixel.ZV, e.Font)
-		fmt.Fprint(offsetTxt, "A")
+		fmt.Fprint(offsetTxt, "Ay")
 		offset := offsetTxt.Bounds().H()
 
 		// TODO: We need to create word wrap within view.
@@ -66,9 +66,9 @@ func (e *Engine) DisplayMessageBox(msg string) {
 
 	// Creating our messagebox handler tells the system we have a messagebox
 	// to process and wait for.
-	e.Control.AddSystemHandler("messagebox", pixelgl.KeyEnter, true, func() {
+	e.Control.AddHandler("system", "messagebox", pixelgl.KeyEnter, true, func() {
 		e.ActiveScene.RemoveView("messagebox")
-		e.Control.RemoveSystemHandler("messagebox")
+		e.Control.RemoveHandler("system", "messagebox")
 	})
 
 	// The messagebox should be visible

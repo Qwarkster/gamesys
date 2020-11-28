@@ -1,7 +1,9 @@
-NewScene test1 aqua
+NewMapScene test1 test_assets/maps/bigtest.tmx   aqua
 NewScene test2 maroon
 NewScene test3 chocolate
-NewView  test1 view1 320 120 320 240 cadetblue
+NewView  test1 view1 320 240 640 480 cadetblue
+StartMapView test1 view1
 ShowView test1 view1
 NewActor test1 monster lizard.png 16.0 16.0 true true
 ActorVisible test1 monster view1
+ViewFocus test1 view1 monster

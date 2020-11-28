@@ -78,7 +78,7 @@ func TestMessageBox(t *testing.T) {
 	scene := testEngine.ActiveScene
 
 	assert.NotNil(t, scene.Views["messagebox"], "We should have a messagebox view.")
-	assert.Equal(t, 1, len(testEngine.Control.SystemHandlers), "We should have a system handler set.")
+	assert.Equal(t, 1, len(testEngine.Control.Handlers["system"]), "We should have a system handler set.")
 }
 
 func TestRun(t *testing.T) {
@@ -86,16 +86,16 @@ func TestRun(t *testing.T) {
 		t.Skip("We don't always want to run the main loop.")
 	}
 
-	testEngine.Control.AddApplicationHandler("right", pixelgl.KeyRight, false, func() {
+	testEngine.Control.AddHandler("app", "right", pixelgl.KeyRight, false, func() {
 		testEngine.ActiveScene.MoveActor(testEngine.Actors["monster"], 0)
 	})
-	testEngine.Control.AddApplicationHandler("right", pixelgl.KeyLeft, false, func() {
+	testEngine.Control.AddHandler("app", "left", pixelgl.KeyLeft, false, func() {
 		testEngine.ActiveScene.MoveActor(testEngine.Actors["monster"], 180)
 	})
-	testEngine.Control.AddApplicationHandler("right", pixelgl.KeyUp, false, func() {
+	testEngine.Control.AddHandler("app", "up", pixelgl.KeyUp, false, func() {
 		testEngine.ActiveScene.MoveActor(testEngine.Actors["monster"], 90)
 	})
-	testEngine.Control.AddApplicationHandler("right", pixelgl.KeyDown, false, func() {
+	testEngine.Control.AddHandler("app", "down", pixelgl.KeyDown, false, func() {
 		testEngine.ActiveScene.MoveActor(testEngine.Actors["monster"], 270)
 	})
 	testEngine.Run()

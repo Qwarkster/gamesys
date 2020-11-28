@@ -166,10 +166,8 @@ func (e *Engine) NewMapScene(file string) *Scene {
 	newScene := e.NewScene()
 
 	// Load our map file
-	newMap := NewMap(file)
-
 	// Attach mapdata to scene.
-	newScene.MapData = &newMap
+	newScene.MapData = NewMap(file)
 
 	// Get our actors from the mapfile.
 	newScene.ActorsFromMapFile()

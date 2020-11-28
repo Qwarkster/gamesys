@@ -11,13 +11,8 @@ import (
 // there are any system handlers present, they will override the application
 // handlers until there are not any system handlers present.
 type Controller struct {
-	// Handlers are the connected keystrokes and functions.
-	Handlers []*Handler
-
-	// SystemHandlers are system handlers that overrule the application handlers
-	// when present. Example is a messagebox that blocks and waits to be
-	// closed by the user. Effectively the concept of system modal.
-	SystemHandlers []*Handler
+	// Handlers are the collections of Handler Sets
+	Handlers map[string][]*Handler
 
 	// Engine is the engine the controller is running on.
 	Engine *Engine
@@ -41,43 +36,40 @@ type Handler struct {
 
 // Initialize will setup any structure elements that require not being nil.
 func (c *Controller) Initialize() {
-	// Empty handler arrays
-	c.Handlers = make([]*Handler, 0)
-	c.SystemHandlers = make([]*Handler, 0)
+	// Setup handler map
+	c.Handlers = make(map[string][]*Handler)
 
 	// Set the starting time.
 	c.Engine.LastMove = time.Now()
 }
 
-// AddApplicationHandler will add a pixelgl button handler to our list. The
-// sensitive argument indicates if we use the JustPress method, firing the
-// handler once per keypress as opposed to a handler that would react as long
-// as the key is held down, as a motion handler might behave.
-func (c *Controller) AddApplicationHandler(id string, button pixelgl.Button, sensitive bool, action func()) {
-	c.Handlers = append(c.Handlers, &Handler{ID: id, Button: button, Sensitive: sensitive, Action: action})
+// AddHandler will add the indicated type of handler to this control. `sensitive`
+// will indicate if the JustPress method is used, which triggers the handler
+// once. Otherwise the handler will act as a game button, allowing it to be
+// held for repeated effect.
+func (c *Controller) AddHandler(class string, id string, button pixelgl.Button, sensitive bool, action func()) {
+	handler, ok := c.Handlers[class]
+	if !ok {
+		handler = make([]*Handler, 0)
+	}
+	handler = append(handler, &Handler{ID: id, Button: button, Sensitive: sensitive, Action: action})
+	c.Handlers[class] = handler
 }
 
-// AddSystemHandler does the same as the application method, only on our
-// system collection. TODO: Refactor appropriately.
-func (c *Controller) AddSystemHandler(id string, button pixelgl.Button, sensitive bool, action func()) {
-	c.SystemHandlers = append(c.SystemHandlers, &Handler{ID: id, Button: button, Sensitive: sensitive, Action: action})
-}
-
-// RemoveSystemHandler will remove a handler from the collection. If we provide
-// an invalid id, it shouldn't remove anything.
-func (c *Controller) RemoveSystemHandler(id string) {
-	currenthandlers := len(c.SystemHandlers)
+// RemoveHandler will remove a handler from the provided handler list.
+func (c *Controller) RemoveHandler(class string, id string) {
+	currenthandlers := c.Handlers[class]
 	newHandlers := make([]*Handler, 0)
 
-	if currenthandlers > 0 {
-		for _, h := range c.SystemHandlers {
+	if len(currenthandlers) > 0 {
+		for _, h := range currenthandlers {
 			if h.ID != id {
 				newHandlers = append(newHandlers, h)
 			}
 		}
 	}
 
-	c.SystemHandlers = newHandlers
+	c.Handlers[class] = newHandlers
 }
 
 // Run will loop through our controllers running any handlers that are setup.
@@ -87,10 +79,10 @@ func (c *Controller) Run() {
 	c.Engine.LastMove = time.Now()
 
 	// If we have system handlers, we overrule application handlers.
-	if len(c.SystemHandlers) > 0 {
-		c.processHandlers(c.SystemHandlers)
+	if len(c.Handlers["system"]) > 0 {
+		c.processHandlers(c.Handlers["system"])
 	} else {
-		c.processHandlers(c.Handlers)
+		c.processHandlers(c.Handlers["app"])
 	}
 }
 

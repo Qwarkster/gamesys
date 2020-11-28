@@ -38,6 +38,9 @@ type Scene struct {
 	// MapData is the tiled data object.
 	MapData *Map
 
+	// Control is the collection of handlers specific to the scene.
+	Control *Controller
+
 	// Engine is the engine this scene belongs to.
 	Engine *Engine
 }

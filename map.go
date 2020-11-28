@@ -27,7 +27,7 @@ type Map struct {
 // NewMap will load and initialize a map from a mapfile. If we need
 // to change maps during a game, it makes sense to reset everything about
 // a map so that we don't have any lingering artifacts.
-func NewMap(mapfile string) Map {
+func NewMap(mapfile string) *Map {
 	newMap := Map{}
 
 	newMap.Img = make([]*pixel.PictureData, 0)
@@ -74,5 +74,5 @@ func NewMap(mapfile string) Map {
 	}
 
 	// Ready to go
-	return newMap
+	return &newMap
 }
