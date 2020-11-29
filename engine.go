@@ -1,6 +1,7 @@
 package gamesys
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"time"
@@ -143,7 +144,11 @@ func (e *Engine) RunScriptFile(file string) {
 
 // NewScene will create a new scene. We use the already loaded configuration to
 // initialize it. It should crash amazingly when there's no config loaded.
-func (e *Engine) NewScene() *Scene {
+func (e *Engine) NewScene(id string, bgcolor string) error {
+	if e.Config == nil {
+		return errors.New("newscene: configuration not set")
+	}
+
 	// Initialize our scene
 	newScene := &Scene{Basespeed: e.Config.Default.Scene.Basespeed, Engine: e}
 
@@ -155,40 +160,19 @@ func (e *Engine) NewScene() *Scene {
 	newRect := pixel.R(0, 0, e.Config.System.Window.Width, e.Config.System.Window.Height)
 	newScene.Rendered = pixelgl.NewCanvas(newRect)
 
-	// Pass it back
-	return newScene
-}
+	// Set the background
+	newScene.SetBackground(bgcolor)
 
-// NewMapScene will start a new scene with a mapfile. In this way we allow
-// a scene to be run that has no map attached.
-func (e *Engine) NewMapScene(file string) *Scene {
-	// Start with a basic scene.
-	newScene := e.NewScene()
+	// Add to our engine now
+	e.Scenes[id] = newScene
 
-	// Load our map file
-	// Attach mapdata to scene.
-	newScene.MapData = NewMap(file)
-
-	// Get our actors from the mapfile.
-	newScene.ActorsFromMapFile()
-
-	// Return the completed scene.
-	return newScene
+	// All good so return nil
+	return nil
 }
 
 // GetScene should grab a scene for easy reference.
 func (e *Engine) GetScene(id string) *Scene {
 	return e.Scenes[id]
-}
-
-// GetActiveScene will get the currently active scene.
-func (e *Engine) GetActiveScene() *Scene {
-	return e.ActiveScene
-}
-
-// AddScene will add a scene to the system.
-func (e *Engine) AddScene(id string, scene *Scene) {
-	e.Scenes[id] = scene
 }
 
 // ActivateScene will set the currently running scene.
@@ -197,6 +181,7 @@ func (e *Engine) ActivateScene(scene string) {
 }
 
 // NewActor creates a new actor and returns it
+// TODO: Allow for non image actors.
 func (e *Engine) NewActor(filename string, position pixel.Vec) *Actor {
 	newActor := &Actor{Visible: false, Speed: e.Config.Default.Actor.Speed, Collision: true, Position: position}
 	newActor.Src, err = LoadImage(e.Config.System.Directory.Characters + "/" + filename)

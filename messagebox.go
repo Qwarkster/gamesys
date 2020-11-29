@@ -36,16 +36,27 @@ func (e *Engine) DisplayMessageBox(msg string) {
 	y := msgConfig.Y
 	height := msgConfig.Height
 	width := msgConfig.Width
-	newView := scene.NewView(pixel.V(x, y), pixel.R(0, 0, width, height))
+
+	scene.NewView("messagebox", pixel.V(x, y), pixel.R(0, 0, width, height), msgConfig.BGColor)
+
+	// Grab our new message view
+	msgView, err := scene.GetView("messagebox")
+	if err != nil {
+		// I do not expect to see this, unless something is broken elsewhere.
+		panic(err)
+	}
+
+	// The messagebox should be visible
+	msgView.Show()
 
 	// Create a drawing method.
-	newView.DesignView = func() {
+	msgView.DesignView = func() {
 		// Get our configuration
 		color := colornames.Map[msgConfig.Color]
 		bgcolor := colornames.Map[msgConfig.BGColor]
 
 		// Prepare colors
-		newView.Rendered.Clear(bgcolor)
+		msgView.Rendered.Clear(bgcolor)
 		msgTxt := text.New(pixel.ZV, e.Font)
 		msgTxt.Color = color
 
@@ -58,9 +69,9 @@ func (e *Engine) DisplayMessageBox(msg string) {
 		fmt.Fprintf(msgTxt, msg)
 
 		// Render to our view, do this better soon.
-		newView.Rendered.SetMatrix(pixel.IM.Moved(pixel.V(2, height-offset+2)))
-		msgTxt.Draw(newView.Rendered, pixel.IM)
-		newView.Rendered.SetMatrix(pixel.IM)
+		msgView.Rendered.SetMatrix(pixel.IM.Moved(pixel.V(2, height-offset+2)))
+		msgTxt.Draw(msgView.Rendered, pixel.IM)
+		msgView.Rendered.SetMatrix(pixel.IM)
 
 	}
 
@@ -71,9 +82,4 @@ func (e *Engine) DisplayMessageBox(msg string) {
 		e.Control.RemoveHandler("system", "messagebox")
 	})
 
-	// The messagebox should be visible
-	newView.Show()
-
-	// Attach the view to the scene.
-	scene.AttachView("messagebox", newView)
 }

@@ -1,8 +1,7 @@
 package gamesys
 
 import (
-	"fmt"
-	"os"
+	"errors"
 
 	"github.com/faiface/pixel"
 	"github.com/lafriks/go-tiled"
@@ -17,7 +16,8 @@ type Map struct {
 	// Size will be the size of our map, pulled from our map data
 	Size pixel.Vec
 
-	// The rendered full map
+	// The rendered full map. We set this up as an array so that in future
+	// we can process assorted layers independently if needed.
 	Img []*pixel.PictureData
 
 	// Our collision information, a collection of map objects.
@@ -26,19 +26,19 @@ type Map struct {
 
 // NewMap will load and initialize a map from a mapfile. If we need
 // to change maps during a game, it makes sense to reset everything about
-// a map so that we don't have any lingering artifacts.
-func NewMap(mapfile string) *Map {
-	newMap := Map{}
-
+// a map so that we don't have any lingering artifacts. We will return errors
+// in order to process them properly.
+func NewMap(mapfile string) (*Map, error) {
+	// Initialize empty map information.
+	newMap := &Map{}
 	newMap.Img = make([]*pixel.PictureData, 0)
 
 	// Load up the source map file.
 	newMap.Src, err = tiled.LoadFromFile(mapfile)
 
-	// We will have to handle errors more gracefully.
+	// Unable to proceed if we don't load the file properly.
 	if err != nil {
-		fmt.Printf("Error loading mapfile: %s", err.Error())
-		os.Exit(2)
+		return newMap, errors.New("newmap: loading map failed")
 	}
 
 	// Grab some of our map information
@@ -47,15 +47,13 @@ func NewMap(mapfile string) *Map {
 	// This creates our map renderer.
 	renderer, err := render.NewRenderer(newMap.Src)
 	if err != nil {
-		fmt.Printf("map unsupported for rendering: %s", err.Error())
-		os.Exit(2)
+		return newMap, errors.New("newmap: map unsupported")
 	}
 
 	// Render all visible layers.
 	err = renderer.RenderVisibleLayers()
 	if err != nil {
-		fmt.Printf("layer unsupported for rendering: %s", err.Error())
-		os.Exit(2)
+		return newMap, errors.New("newmap: maplayer unsupported")
 	}
 
 	// Convert into pixel's image/sprite format.
@@ -73,6 +71,6 @@ func NewMap(mapfile string) *Map {
 		}
 	}
 
-	// Ready to go
-	return &newMap
+	// Return our loaded map, along with nil error response.
+	return newMap, nil
 }

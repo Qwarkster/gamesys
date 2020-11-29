@@ -1,6 +1,7 @@
 package gamesys
 
 import (
+	"errors"
 	"image/color"
 
 	"github.com/faiface/pixel"
@@ -61,6 +62,21 @@ type View struct {
 // SetBackground sets the background color of the view.
 func (v *View) SetBackground(bgcolor string) {
 	v.Background = colornames.Map[bgcolor]
+}
+
+// UseMap will setup the view to use the scene map. It will error if there is
+// no mapdata to use.
+func (v *View) UseMap() error {
+	// We should only be processing map data on a map
+	// view, so this code needs a better home.
+	if v.Scene.MapData != nil {
+		v.Src = v.Scene.MapData.Img[0]
+		v.Output = append(v.Output, pixel.NewSprite(v.Src, v.Src.Bounds()))
+		return nil
+	}
+
+	// Return with error if we weren't able to use the map
+	return errors.New("usemap: there is no mapdata available to use")
 }
 
 // Show the view.
