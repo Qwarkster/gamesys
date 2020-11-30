@@ -21,14 +21,6 @@ const (
 	RadDeg float64 = 180 / math.Pi
 )
 
-// FailError will panic and fail on error. Use this on errors we can't
-// really handle gracefully.
-func FailError(e error) {
-	if e != nil {
-		panic(e)
-	}
-}
-
 // LoadImage will give us some picture data.
 func LoadImage(path string) (pixel.Picture, error) {
 	file, err := os.Open(path)
