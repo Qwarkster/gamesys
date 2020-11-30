@@ -4,7 +4,6 @@ import (
 	"os"
 	"testing"
 
-	"github.com/faiface/pixel"
 	"github.com/faiface/pixel/pixelgl"
 	"github.com/stretchr/testify/assert"
 )
@@ -73,19 +72,13 @@ func TestActivateScene(t *testing.T) {
 	assert.NotNil(t, testEngine.ActiveScene, "We should have an active scene")
 }
 
-func TestAddActor(t *testing.T) {
-	testEngine.AddActor("testguy1", &Actor{Position: pixel.V(24, 24)})
-
-	assert.Equal(t, 1, len(testEngine.Actors), "We should only have 1 actor loaded.")
-}
-
 func TestMessageBox(t *testing.T) {
-	testEngine.MessageBox("Hello there!")
+	testEngine.DisplayMessageBox("Hello there!\nWe have multiple lines here.\nWhat shall we do with them?")
 
 	scene := testEngine.ActiveScene
 
 	assert.NotNil(t, scene.Views["messagebox"], "We should have a messagebox view.")
-	assert.True(t, testEngine.Control.MessageBox)
+	assert.Equal(t, 1, len(testEngine.Control.Handlers["system"]), "We should have a system handler set.")
 }
 
 func TestRun(t *testing.T) {
@@ -93,5 +86,17 @@ func TestRun(t *testing.T) {
 		t.Skip("We don't always want to run the main loop.")
 	}
 
+	testEngine.Control.AddHandler("app", "right", pixelgl.KeyRight, false, func() {
+		testEngine.ActiveScene.MoveActor(testEngine.Actors["monster"], 0)
+	})
+	testEngine.Control.AddHandler("app", "left", pixelgl.KeyLeft, false, func() {
+		testEngine.ActiveScene.MoveActor(testEngine.Actors["monster"], 180)
+	})
+	testEngine.Control.AddHandler("app", "up", pixelgl.KeyUp, false, func() {
+		testEngine.ActiveScene.MoveActor(testEngine.Actors["monster"], 90)
+	})
+	testEngine.Control.AddHandler("app", "down", pixelgl.KeyDown, false, func() {
+		testEngine.ActiveScene.MoveActor(testEngine.Actors["monster"], 270)
+	})
 	testEngine.Run()
 }

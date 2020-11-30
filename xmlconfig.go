@@ -16,10 +16,10 @@ type Configuration struct {
 
 // System configuration setting.
 type System struct {
-	XMLName    xml.Name   `xml:"system"`
-	Window     Window     `xml:"window"`
-	Scripting  Scripting  `xml:"scripting"`
-	MessageBox MessageBox `xml:"messagebox"`
+	XMLName   xml.Name  `xml:"system"`
+	Window    Window    `xml:"window"`
+	Scripting Scripting `xml:"scripting"`
+	Directory Directory `xml:"directory"`
 }
 
 // Window is the options for starting pixel window.
@@ -37,43 +37,38 @@ type Scripting struct {
 	Extension string   `xml:"extension,attr"`
 }
 
-// MessageBox sets options for the system messagebox.
-type MessageBox struct {
-	XMLName xml.Name `xml:"messagebox"`
-	Color   string   `xml:"color,attr"`
-	BGColor string   `xml:"bgcolor,attr"`
+// Directory will set default directories not set elsewhere
+type Directory struct {
+	XMLName    xml.Name `xml:"directory"`
+	Characters string   `xml:"characters,attr"`
 }
 
 // Default object values when not provided.
 type Default struct {
-	XMLName xml.Name `xml:"default"`
-	Scene   Scene    `xml:"scene"`
-	Actor   Actor    `xml:"actor"`
+	XMLName    xml.Name   `xml:"default"`
+	Scene      Scene      `xml:"scene"`
+	Actor      Actor      `xml:"actor"`
+	MessageBox MessageBox `xml:"messagebox"`
 }
 
-// LoadConfiguration setups a configuration from an xml file.
+// LoadConfiguration loads a configuration from the provided XML file.
 func LoadConfiguration(file string) (*Configuration, error) {
 	// New empty configuration
 	newconfig := &Configuration{}
 
-	// Open our xmlFile
+	// Open our file, ensuring it closes later.
 	xmlFile, err := os.Open(file)
-	// if os.Open returns an error then handle it
 	if err != nil {
 		fmt.Println(err)
 		return newconfig, err
 	}
-
-	fmt.Println("Successfully Opened " + file)
-	// defer the closing of our xmlFile so that we can parse it later on
 	defer xmlFile.Close()
 
 	// read our opened xmlFile as a byte array.
 	byteValue, _ := ioutil.ReadAll(xmlFile)
 
-	// Do the unmarshal thing
-
-	xml.Unmarshal(byteValue, &newconfig)
+	// Process XML file in the simplest way possible.
+	err = xml.Unmarshal(byteValue, &newconfig)
 
 	return newconfig, err
 }

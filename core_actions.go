@@ -10,28 +10,22 @@ func (e *Engine) CreateCoreActions() {
 	// ***********************************
 	// NewScene will create a basic scene.
 	// ===================================
-	// NewScene scene_id background
+	// NewScene scene_id bgcolor
 	// -----------------------------------
 	newScript := NewScriptAction("NewScene", func(args []interface{}) interface{} {
 		// Setup arguments.
 		id := args[0].(string)
 		bgcolor := args[1].(string)
 
-		// Create the new scene.
-		newScene := e.NewScene()
-		newScene.SetBackground(bgcolor)
-
-		// Attach our scene.
-		e.AddScene(id, newScene)
-
-		return nil
+		// Create the scene, returning any errors.
+		return e.NewScene(id, bgcolor)
 	})
 	e.ScriptActions[newScript.Action] = newScript
 
 	// *****************************************************
 	// NewMapScene will create a scene with a preloaded map.
 	// =====================================================
-	// NewMapScene scene_id file background
+	// NewMapScene scene_id file bgcolor
 	// -----------------------------------------------------
 	newScript = NewScriptAction("NewMapScene", func(args []interface{}) interface{} {
 		// Setup arguments.
@@ -39,14 +33,19 @@ func (e *Engine) CreateCoreActions() {
 		file := args[1].(string)
 		bgcolor := args[2].(string)
 
-		// Create the new scene.
-		newScene := e.NewMapScene(file)
-		newScene.SetBackground(bgcolor)
+		// Create the new scene first
+		err = e.NewScene(id, bgcolor)
 
-		// Attach our scene.
-		e.AddScene(id, newScene)
+		// If we have an error here, we don't have a scene to work with.
+		if err != nil {
+			return err
+		}
 
-		return nil
+		// As long as we created the scene successfully, we can load a map
+		// onto it.
+		scene := e.GetScene(id)
+		return scene.LoadMap(file)
+
 	})
 	e.ScriptActions[newScript.Action] = newScript
 
@@ -58,7 +57,7 @@ func (e *Engine) CreateCoreActions() {
 	newScript = NewScriptAction("NewView", func(args []interface{}) interface{} {
 		// Setup arguments.
 		sceneID := args[0].(string)
-		id := args[1].(string)
+		viewID := args[1].(string)
 		x := StrFloat(args[2])
 		y := StrFloat(args[3])
 		width := StrFloat(args[4])
@@ -66,22 +65,14 @@ func (e *Engine) CreateCoreActions() {
 		bgcolor := args[6].(string)
 
 		// Grab the scene we will be working with.
-		scene := e.Scenes[sceneID]
+		scene := e.GetScene(sceneID)
 
 		// Setup the position and camera rectangle.
 		newPos := pixel.V(x, y)
 		newCam := pixel.R(0, 0, width, height)
 
 		// Create and add to our system.
-		newView := scene.NewView(newPos, newCam)
-
-		// Set our background color on the view.
-		newView.SetBackground(bgcolor)
-
-		scene.AttachView(id, newView)
-
-		// Back into the collection
-		e.Scenes[sceneID] = scene
+		scene.NewView(viewID, newPos, newCam, bgcolor)
 
 		return nil
 	})
@@ -92,15 +83,16 @@ func (e *Engine) CreateCoreActions() {
 	// =========================================================
 	// StartMapView scene_id view_id
 	// ---------------------------------------------------------
+	// TODO: A better name
 	newScript = NewScriptAction("StartMapView", func(args []interface{}) interface{} {
 		// Setup arguments.
-		scene := args[0].(string)
+		sceneID := args[0].(string)
 		view := args[1].(string)
 
 		// This is an easy one we hope.
-		e.Scenes[scene].StartMapView(view)
+		scene := e.GetScene(sceneID)
 
-		return nil
+		return scene.Views[view].UseMap()
 	})
 	e.ScriptActions[newScript.Action] = newScript
 
@@ -149,9 +141,8 @@ func (e *Engine) CreateCoreActions() {
 		// Add to main list.
 		e.AddActor(id, newActor)
 
-		// Attach this to the scene.
-		scene.AttachActor(id)
-		e.Scenes[sceneID] = scene
+		// Use this actor on the scene.
+		scene.UseActor(id)
 
 		return nil
 	})

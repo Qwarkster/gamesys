@@ -2,8 +2,6 @@ package gamesys
 
 import (
 	"encoding/xml"
-	"fmt"
-	"os"
 
 	"github.com/faiface/pixel"
 )
@@ -37,23 +35,6 @@ type Actor struct {
 
 	// Collision determines if it collides with anything or not
 	Collision bool
-}
-
-// NewActor creates a new actor and returns it
-func (e *Engine) NewActor(filename string, position pixel.Vec) *Actor {
-	newActor := &Actor{Visible: false, Speed: e.Config.Default.Actor.Speed, Collision: true, Position: position}
-	//newActor.Destinations = make([]pixel.Vec, 0)
-	newActor.Src, err = LoadImage("characters/" + filename)
-
-	if err != nil {
-		fmt.Printf("Error loading image: %s", err.Error())
-		os.Exit(2)
-	}
-
-	// Create our sprite.
-	newActor.Output = pixel.NewSprite(newActor.Src, newActor.Src.Bounds())
-	newActor.Clip = newActor.Output.Frame().Moved(newActor.Position)
-	return newActor
 }
 
 // SetClip will create a clipping box based on the current actor position.
@@ -96,6 +77,13 @@ func (a *Actor) Toggle() {
 // Collides will set if the actor reacts to the collision layer.
 func (a *Actor) Collides(collision bool) {
 	a.Collision = collision
+}
+
+// Render will draw out the actor to the output. This often only will need
+// to run on file load, not during running loops.
+func (a *Actor) Render() {
+	a.Output = pixel.NewSprite(a.Src, a.Src.Bounds())
+	a.Clip = a.Output.Frame().Moved(a.Position)
 }
 
 // Draw will draw the respective actor to the provided destination.

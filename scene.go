@@ -2,6 +2,7 @@ package gamesys
 
 import (
 	"encoding/xml"
+	"errors"
 	"image/color"
 	"math"
 
@@ -38,48 +39,42 @@ type Scene struct {
 	// MapData is the tiled data object.
 	MapData *Map
 
+	// Control is the collection of handlers specific to the scene.
+	Control *Controller
+
 	// Engine is the engine this scene belongs to.
 	Engine *Engine
 }
 
-// NewView will create and return a new view. It's not tied to a map
-// at this point, which is how it should be.
-func (s *Scene) NewView(position pixel.Vec, camera pixel.Rect) *View {
+// NewView will create a new view and attach it to the scene.
+func (s *Scene) NewView(id string, position pixel.Vec, camera pixel.Rect, bgcolor string) {
 	// A new view with some of our fields.
 	newView := &View{Visible: false, Position: position, Camera: camera, Scene: s, Engine: s.Engine}
 
 	// The canvas we prepare and flip to screen.
 	newView.Rendered = pixelgl.NewCanvas(newView.Camera)
 
-	return newView
-}
+	// Set our background color on the view.
+	newView.SetBackground(bgcolor)
 
-// SetBackground will set the background color of the scene.
-func (s *Scene) SetBackground(bgcolor string) {
-	s.Background = colornames.Map[bgcolor]
-}
-
-// StartMapView sets a view up to use the scene map
-// data.
-func (s *Scene) StartMapView(view string) {
-	// We should only be processing map data on a map
-	// view, so this code needs a better home.
-	if s.MapData != nil {
-		s.Views[view].Src = s.MapData.Img[0]
-		s.Views[view].Output = append(s.Views[view].Output,
-			pixel.NewSprite(s.Views[view].Src,
-				s.Views[view].Src.Bounds()))
-	}
-}
-
-// AttachView will add a view to the scene. We also need to add it to the view
-// order so that it renders correctly.
-func (s *Scene) AttachView(id string, view *View) {
 	// Add to our view order on the scene.
 	s.ViewOrder = append(s.ViewOrder, id)
 
 	// Add to our scene here
-	s.Views[id] = view
+	s.Views[id] = newView
+}
+
+// GetView will return the requested view, if it exists.
+func (s *Scene) GetView(id string) (*View, error) {
+	err = nil
+
+	returnView, ok := s.Views[id]
+	if !ok {
+		err = errors.New("getview: view not found")
+		returnView = &View{}
+	}
+
+	return returnView, err
 }
 
 // RemoveView will destroy the view from the scene, also maintaining the vieworder.
@@ -97,11 +92,35 @@ func (s *Scene) RemoveView(id string) {
 	delete(s.Views, id)
 }
 
-// ActorsFromMapFile will load up the actors that are setup
-// on the current mapfile.
-func (s *Scene) ActorsFromMapFile() {
-	// We can load up the actors from the mapfile data at any time.
+// SetBackground will set the background color of the scene.
+func (s *Scene) SetBackground(bgcolor string) {
+	s.Background = colornames.Map[bgcolor]
+}
 
+// LoadMap will load a map into a scene. This needs to be called before we
+// can start a map view.
+func (s *Scene) LoadMap(file string) error {
+
+	// Load our mapfile directly into our scene.
+	s.MapData, err = NewMap(file)
+
+	// If we have an error, we can't continue the loading process. We can
+	// pass along the errors we set as they are relevant.
+	if err != nil {
+		return err
+	}
+
+	// Get our actors from the mapdata.
+	s.LoadActorsFromMapData()
+
+	// All loaded with no issues, return peacefully.
+	return nil
+}
+
+// LoadActorsFromMapData will return an array of actors that are present in the mapdata.
+func (s *Scene) LoadActorsFromMapData() {
+	// Loop through our primary object group.
+	// TODO: Allow for all object groups.
 	for _, obj := range s.MapData.Src.ObjectGroups[0].Objects {
 		if obj.Type == "Spawn" {
 			// We need to grab our properties
@@ -121,14 +140,14 @@ func (s *Scene) ActorsFromMapFile() {
 			// Add to our engine.
 			s.Engine.AddActor(actorID, newActor)
 
-			// Attach this to the scene.
-			s.AttachActor(actorID)
+			// Use the actor on this scene.
+			s.UseActor(actorID)
 		}
 	}
 }
 
-// AttachActor will attach an actor to the scene.
-func (s *Scene) AttachActor(actor string) {
+// UseActor will use the requested actor on this scene.
+func (s *Scene) UseActor(actor string) {
 	s.Actors[actor] = s.Engine.Actors[actor]
 }
 
@@ -141,29 +160,30 @@ func (s *Scene) MoveActor(actor *Actor, direction int) {
 	speed *= actor.Speed
 
 	// Our movement values and flags.
-	movement := pixel.ZV
+	movement := pixel.Unit(float64(direction) * DegRad)
+	movement = movement.Scaled(speed)
 	move := false
-
-	// Create movement vector based on direction
-	switch direction {
-	case NORTH:
-		movement.Y = speed
-	case SOUTH:
-		movement.Y -= speed
-	case EAST:
-		movement.X = speed
-	case WEST:
-		movement.X -= speed
-	}
 
 	// Find our new position.
 	newPos := actor.Position.Add(movement)
 	newClip := actor.Clip.Moved(movement)
 
 	if actor.Collision {
-		if s.CollisionFree(newClip) {
-			// All is good to move safely.
+		if s.MapData != nil {
+			if s.CollisionFree(newClip) {
+				// All is good to move safely.
+				move = true
+			}
+		} else {
+			// No map, find proper view move unless focus and out of range
 			move = true
+			for _, v := range s.Views {
+				if v.Focus == actor {
+					if !v.CameraContains(newClip) {
+						move = false
+					}
+				}
+			}
 		}
 	} else if s.Contains(newClip) {
 		move = true
@@ -184,9 +204,10 @@ func (s *Scene) ProcessActorDestinations() {
 			// We can move by a distance vector.
 			dest := a.Destinations[0]
 			motion := a.Position.To(dest)
+			// distance is how far to our dest
 			distance := math.Hypot(motion.X, motion.Y)
-			travel := Dt * (s.Basespeed * a.Speed)
-
+			// travel is how far we should travel, given game speed
+			travel := s.Engine.Dt * (s.Basespeed * a.Speed)
 			// Do we travel all the way or not?
 			if travel >= distance {
 				// Here we reach the destination
@@ -210,16 +231,17 @@ func (s *Scene) ProcessActorDestinations() {
 	}
 }
 
-// CollisionFree will indicate the space is free of collisions.
+// CollisionFree will indicate the space is free of collisions. It tests
+// against the collision objects that are found in the map file.
 func (s *Scene) CollisionFree(clip pixel.Rect) bool {
-	// We can skip here so we don't have to worry about it in other places.
-	for _, c := range s.MapData.Collision {
-		if c.Intersects(clip) {
-			return false
+	if s.MapData != nil {
+		for _, c := range s.MapData.Collision {
+			if c.Intersects(clip) {
+				return false
+			}
 		}
 	}
 
-	// So if we skip collision, we are always safe.
 	return true
 }
 
@@ -227,27 +249,24 @@ func (s *Scene) CollisionFree(clip pixel.Rect) bool {
 // view's source map. Used for bounds checking against actors and
 // the camera.
 func (s *Scene) Contains(target pixel.Rect) bool {
-	return Contains(s.MapData.Img[0].Rect, target)
+	return Contains(s.Rendered.Bounds(), target)
 }
 
 // Render will draw our views onto our scene canvas.
 func (s *Scene) Render() {
+	s.Rendered.Clear(s.Background)
 	for _, view := range s.ViewOrder {
-		v := s.Views[view]
-		// Render our view to canvas.
-		v.Render()
-
-		// Draw onto our scene
-		v.Draw(s.Rendered)
-		v.Rendered.Clear(v.Background)
+		s.Views[view].Draw()
 	}
 }
 
-// Draw will draw the scene out to the provided destination.
-func (s *Scene) Draw(win *pixelgl.Window) {
-	// Adjust for the position on the screen
-	win.SetMatrix(pixel.IM.Moved(s.Rendered.Bounds().Center()))
+// Draw will draw the scene out to the Engine win target. This should be the
+// pixelgl.Window reference.
+func (s *Scene) Draw() {
+	// Render scene up to date before drawing to screen
+	s.Render()
 
 	// Now to put the canvas to the screen
-	s.Rendered.Draw(win, pixel.IM)
+	s.Engine.win.Clear(s.Background)
+	s.Rendered.Draw(s.Engine.win, pixel.IM.Moved(s.Rendered.Bounds().Center()))
 }

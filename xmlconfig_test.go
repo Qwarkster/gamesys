@@ -30,6 +30,11 @@ func TestLoadConfiguration(t *testing.T) {
 	assert.Equal(t, 1.0, newconfig.Default.Actor.Speed, "Actor speed modifier should not be 0")
 
 	// We need basic messagebox configuration
-	assert.NotNil(t, newconfig.System.MessageBox.Color, "We should have a color set")
-	assert.NotNil(t, newconfig.System.MessageBox.BGColor, "We should have a background color set")
+	msgConfig := newconfig.Default.MessageBox
+	assert.NotNil(t, msgConfig.Color, "We should have a color set")
+	assert.NotNil(t, msgConfig.BGColor, "We should have a background color set")
+	assert.Equal(t, 320.0, msgConfig.X, "We should have an X position set")
+	assert.Equal(t, 240.0, msgConfig.Y, "We should have a Y position set")
+	assert.Equal(t, 100.0, msgConfig.Height, "We should have a height set")
+	assert.Equal(t, 200.0, msgConfig.Width, "We should have a width set")
 }

@@ -1,6 +1,7 @@
 package gamesys
 
 import (
+	"errors"
 	"image/color"
 
 	"github.com/faiface/pixel"
@@ -63,6 +64,21 @@ func (v *View) SetBackground(bgcolor string) {
 	v.Background = colornames.Map[bgcolor]
 }
 
+// UseMap will setup the view to use the scene map. It will error if there is
+// no mapdata to use.
+func (v *View) UseMap() error {
+	// We should only be processing map data on a map
+	// view, so this code needs a better home.
+	if v.Scene.MapData != nil {
+		v.Src = v.Scene.MapData.Img[0]
+		v.Output = append(v.Output, pixel.NewSprite(v.Src, v.Src.Bounds()))
+		return nil
+	}
+
+	// Return with error if we weren't able to use the map
+	return errors.New("usemap: there is no mapdata available to use")
+}
+
 // Show the view.
 func (v *View) Show() {
 	v.Visible = true
@@ -85,25 +101,29 @@ func (v *View) Toggle() {
 // Render will setup the viewable portion of the view.
 func (v *View) Render() {
 	if v.Visible {
-		// Output means we have a map view to process.
-		for _, o := range v.Output {
-			// Center on our actor if we have one.
-			if v.Focus != nil {
-				actor := v.Focus
-				actorPos := actor.Position.Sub(v.Camera.Min)
-				movement := actorPos.Sub(v.Rendered.Bounds().Center())
-				v.CenterOn(movement)
-			}
+		// Clear the existing view
+		v.Rendered.Clear(v.Background)
 
-			// Grab the relevent section of map and place onto our view.
-			o.Set(v.Src, v.Camera)
-			o.Draw(v.Rendered, pixel.IM.Moved(v.Rendered.Bounds().Center()))
+		// Output means we have a map view to process.
+		if v.Output != nil {
+			for _, o := range v.Output {
+				// Center on our actor if we have one.
+				if v.Focus != nil {
+					actor := v.Focus
+					actorPos := actor.Position.Sub(v.Camera.Min)
+					movement := actorPos.Sub(v.Rendered.Bounds().Center())
+					v.CenterOn(movement)
+				}
+
+				// Grab the relevent section of map and place onto our view.
+				o.Set(v.Src, v.Camera)
+				o.Draw(v.Rendered, pixel.IM.Moved(v.Rendered.Bounds().Center()))
+			}
 		}
 
 		// Now we work on the actors on the screen here.
 		for _, a := range v.VisibleActors {
-			scene := v.Engine.GetActiveScene()
-			scene.Actors[a].Draw(v)
+			v.Scene.Actors[a].Draw(v)
 		}
 
 		// See if this breaks first.
@@ -119,7 +139,7 @@ func (v *View) FocusOn(actor *Actor) {
 	v.Focus = actor
 }
 
-// CenterOn will center the map on the actor.
+// CenterOn will center the map on the actor who has the focus on that view.
 func (v *View) CenterOn(movement pixel.Vec) {
 	// Make a new temp camera based on where we would travel.
 	newCamera := v.Camera.Moved(movement)
@@ -145,13 +165,13 @@ func (v *View) CenterOn(movement pixel.Vec) {
 }
 
 // Draw will draw the view to the scene, if it's visible.
-func (v *View) Draw(sceneCanvas *pixelgl.Canvas) {
+func (v *View) Draw() {
 	if v.Visible {
-		// Adjust for the position on the screen
-		sceneCanvas.SetMatrix(pixel.IM.Moved(v.Position))
+		// Ensure our view is rendered and up to date.
+		v.Render()
 
-		// Now to put the canvas to the screen
-		v.Rendered.Draw(sceneCanvas, pixel.IM)
+		// This should draw onto the scene.
+		v.Rendered.Draw(v.Scene.Rendered, pixel.IM.Moved(v.Position))
 	}
 }
 
